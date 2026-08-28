@@ -10,6 +10,13 @@ const baseURL = `http://localhost:${PORT}`
 
 export default defineConfig({
   testDir: './e2e',
+  // Tests share one dev server and one real hosted Supabase project (no
+  // per-worker isolation for either), so running specs concurrently is a
+  // source of real flakiness under load, not just slower — observed one
+  // test intermittently miss its 5s expectation under the default 2
+  // workers, passing reliably at workers: 1. Serial execution trades some
+  // wall-clock time for a suite that fails only on a real regression.
+  workers: 1,
   use: { baseURL },
   webServer: {
     command: `npm run dev -- --port ${PORT} --strictPort`,
