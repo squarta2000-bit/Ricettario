@@ -24,7 +24,16 @@ export default function ImportPage() {
       headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
     })
     if (error || !data?.draft) {
-      setErrorMessage(error?.message ?? 'Import failed. You can still fill this in manually.')
+      let message = 'Import failed. You can still fill this in manually.'
+      if (error) {
+        try {
+          const body = await error.context.json()
+          if (body?.error) message = body.error
+        } catch {
+          // fall back to the generic message above
+        }
+      }
+      setErrorMessage(message)
       setDraft({ title: '', complexity: null, servings: null, imageUrl: null, ingredients: [], steps: [] })
       setStatus('error')
       return
@@ -37,17 +46,22 @@ export default function ImportPage() {
   async function handleSave() {
     if (!draft) return
     setStatus('saving')
-    const id = await saveRecipe({
-      title: draft.title,
-      sourceUrl: url,
-      sourceType,
-      imageUrl: draft.imageUrl,
-      complexity: draft.complexity,
-      servings: draft.servings,
-      ingredients: draft.ingredients,
-      steps: draft.steps,
-    })
-    navigate(`/recipe/${id}`)
+    try {
+      const id = await saveRecipe({
+        title: draft.title,
+        sourceUrl: url,
+        sourceType,
+        imageUrl: draft.imageUrl,
+        complexity: draft.complexity,
+        servings: draft.servings,
+        ingredients: draft.ingredients,
+        steps: draft.steps,
+      })
+      navigate(`/recipe/${id}`)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Save failed. Please try again.')
+      setStatus('error')
+    }
   }
 
   if (status === 'idle' || status === 'importing') {
