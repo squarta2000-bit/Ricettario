@@ -44,6 +44,13 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       'e2e/**',
+      // Pre-existing gap (dates back to Task 9): these are Deno tests
+      // (Deno.test, npm:/remote-URL imports) meant for
+      // `deno test supabase/functions/server`, not Vitest's Node-based
+      // ESM loader. A bare `npm run test` (no file filter) was never
+      // actually exercised until now - every prior task only ran a scoped
+      // `npm run test -- <file>`, so this collision went unnoticed.
+      'supabase/**',
     ],
   },
 })
