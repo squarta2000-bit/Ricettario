@@ -61,7 +61,14 @@ export async function extractRecipeWithLlm(sourceText: string, client: MessagesC
 
   const textBlock = response.content.find((block) => block.type === "text" && block.text);
   if (!textBlock?.text) throw new Error("No structured output returned");
-  return JSON.parse(textBlock.text) as RecipeDraft;
+
+  try {
+    return JSON.parse(textBlock.text) as RecipeDraft;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse LLM structured output: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 export function createAnthropicMessagesClient(apiKey: string): MessagesClient {
