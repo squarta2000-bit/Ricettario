@@ -9,10 +9,12 @@ import { Card } from '../components/ui/card'
 export default function HomePage() {
   const [recipes, setRecipes] = useState<RecipeListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     listRecipes()
       .then(setRecipes)
+      .catch(() => setError('Something went wrong loading your recipes.'))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -31,7 +33,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {!isLoading && recipes.length === 0 && (
+        {error && <p className="text-destructive text-sm mb-4">{error}</p>}
+
+        {!isLoading && !error && recipes.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-xl mb-2">No recipes yet</p>
             <p>Import your first recipe from a URL or YouTube video.</p>

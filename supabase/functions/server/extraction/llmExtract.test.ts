@@ -31,3 +31,12 @@ Deno.test("throws when the model returns no text block", async () => {
   const client: MessagesClient = { messages: { create: async () => ({ content: [] }) } };
   await assertRejects(() => extractRecipeWithLlm("text", client), Error, "No structured output returned");
 });
+
+Deno.test("throws a specific error when the response was truncated by max_tokens", async () => {
+  const client: MessagesClient = {
+    messages: {
+      create: async () => ({ content: [{ type: "text", text: '{"title": "Truncated' }], stop_reason: "max_tokens" }),
+    },
+  };
+  await assertRejects(() => extractRecipeWithLlm("text", client), Error, "response was truncated");
+});

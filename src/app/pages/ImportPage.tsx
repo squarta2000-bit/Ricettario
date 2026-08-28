@@ -122,7 +122,10 @@ export default function ImportPage() {
                   steps: e.target.value
                     .split('\n')
                     .filter(Boolean)
-                    .map((line) => ({ instruction: line, estimatedMinutes: null })),
+                    .map((line, index) => ({
+                      instruction: line,
+                      estimatedMinutes: d.steps[index]?.estimatedMinutes ?? null,
+                    })),
                 },
             )
           }

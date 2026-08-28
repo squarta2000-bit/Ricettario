@@ -18,6 +18,21 @@ function requireServiceRoleKey(): string {
   return key
 }
 
+/**
+ * A service-role Supabase client, bypassing RLS. Used both for the
+ * `auth.admin` calls in {@link signInAsNewUser} and by tests that need to
+ * seed/mutate rows directly (e.g. setting `steps.estimated_minutes` to a
+ * real short duration so the cooking-mode timer's auto-advance can be
+ * exercised for real - there's no UI path to set per-step minutes, since
+ * the manual-entry review screen only edits step instruction text).
+ */
+export function createAdminClient() {
+  const serviceRoleKey = requireServiceRoleKey()
+  return createClient(SUPABASE_URL, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
 /** Result of {@link signInAsNewUser}: the signed-in email and a cleanup
  * handle that removes the throwaway user from the hosted project. */
 export interface TestUserSession {
@@ -59,7 +74,6 @@ export interface TestUserSession {
  * {@link TestUserSession}).
  */
 export async function signInAsNewUser(page: Page): Promise<TestUserSession> {
-  const serviceRoleKey = requireServiceRoleKey()
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`
 
   // No need to visit /login or touch the form at all - just establish the
@@ -67,9 +81,7 @@ export async function signInAsNewUser(page: Page): Promise<TestUserSession> {
   await page.goto('/')
   const baseURL = new URL(page.url()).origin
 
-  const admin = createClient(SUPABASE_URL, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  const admin = createAdminClient()
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,

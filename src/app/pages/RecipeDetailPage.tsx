@@ -8,10 +8,27 @@ import { Button } from '../components/ui/button'
 export default function RecipeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (id) getRecipe(id).then(setRecipe)
+    if (id)
+      getRecipe(id)
+        .then(setRecipe)
+        .catch(() => setError('Something went wrong loading this recipe.'))
   }, [id])
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-xl w-full px-4 text-center">
+          <p className="text-destructive text-sm mb-4">{error}</p>
+          <Button asChild variant="outline">
+            <Link to="/">Back to recipes</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   if (!recipe) return null
 

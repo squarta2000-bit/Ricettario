@@ -3,7 +3,9 @@ import type { RecipeDraft } from "./types.ts";
 
 export interface MessagesClient {
   messages: {
-    create(params: Record<string, unknown>): Promise<{ content: Array<{ type: string; text?: string }> }>;
+    create(
+      params: Record<string, unknown>,
+    ): Promise<{ content: Array<{ type: string; text?: string }>; stop_reason?: string }>;
   };
 }
 
@@ -47,7 +49,7 @@ const DRAFT_SCHEMA = {
 export async function extractRecipeWithLlm(sourceText: string, client: MessagesClient): Promise<RecipeDraft> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 4096,
+    max_tokens: 16000,
     output_config: { format: { type: "json_schema", schema: DRAFT_SCHEMA } },
     messages: [
       {
@@ -58,6 +60,12 @@ export async function extractRecipeWithLlm(sourceText: string, client: MessagesC
       },
     ],
   });
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(
+      "LLM response was truncated (hit max_tokens) — the recipe may be too long to extract in one call",
+    );
+  }
 
   const textBlock = response.content.find((block) => block.type === "text" && block.text);
   if (!textBlock?.text) throw new Error("No structured output returned");

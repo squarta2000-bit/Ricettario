@@ -18,14 +18,18 @@ export default function CookingModePage() {
   const { id } = useParams<{ id: string }>()
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
   const [timer, setTimer] = useState<TimerState | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [, forceTick] = useState(0)
   const alertedStepRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (id) getRecipe(id).then((r) => {
-      setRecipe(r)
-      setTimer(startTimer(Date.now()))
-    })
+    if (id)
+      getRecipe(id)
+        .then((r) => {
+          setRecipe(r)
+          setTimer(startTimer(Date.now()))
+        })
+        .catch(() => setError('Something went wrong loading this recipe.'))
   }, [id])
 
   useEffect(() => {
@@ -46,7 +50,33 @@ export default function CookingModePage() {
     return () => clearInterval(interval)
   }, [recipe, timer])
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-xl w-full px-4 text-center">
+          <p className="text-destructive text-sm mb-4">{error}</p>
+          <Button asChild variant="outline">
+            <Link to="/">Back to recipes</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (!recipe || !timer) return null
+
+  if (recipe.steps.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-xl w-full px-4 text-center">
+          <h1 className="text-2xl font-normal mb-4">This recipe has no steps yet</h1>
+          <Button asChild>
+            <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const step = recipe.steps[timer.currentStepIndex]
   const elapsedSeconds = Math.floor(elapsedMsForCurrentStep(timer, Date.now()) / 1000)

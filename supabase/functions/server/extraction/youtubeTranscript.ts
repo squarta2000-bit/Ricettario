@@ -23,5 +23,5 @@ export async function fetchYoutubeTranscript(videoId: string, fetchFn: typeof fe
     m[1].replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/&quot;/g, '"').trim()
   );
   if (lines.length === 0) throw new Error("Transcript was empty");
-  return lines.join(" ");
+  return lines.join(" ").slice(0, 20_000);
 }
