@@ -88,12 +88,33 @@ export async function signInAsNewUser(page: Page): Promise<TestUserSession> {
     )
   }
 
-  await page.goto(actionLink)
-  // supabase-js clears the token hash after processing it (via
-  // `location.hash = ''`), which in Chromium leaves a trailing `#` rather
-  // than a perfectly clean path - so assert on the authenticated page's
-  // content landing, not an exact URL string.
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  // From this point on, the real auth.users row for `userId` already
+  // exists (generateLink created it as a side effect above), regardless of
+  // what happens next. If the navigation or assertion below throws (flaky
+  // navigation, a redirect regression, an auth-service hiccup, a timeout -
+  // all realistic against a live hosted project), this function would
+  // otherwise throw before ever returning the {cleanup} handle - meaning
+  // the caller's own `const { cleanup } = await signInAsNewUser(page)`
+  // line never completes, its try/finally never starts, and the
+  // just-created user would leak with no way to identify or delete it
+  // afterward. Catch here, delete the user we already have the id for,
+  // then rethrow so the caller/test still sees and reports the real
+  // failure - this only adds cleanup, it doesn't swallow the error.
+  try {
+    await page.goto(actionLink)
+    // supabase-js clears the token hash after processing it (via
+    // `location.hash = ''`), which in Chromium leaves a trailing `#`
+    // rather than a perfectly clean path - so assert on the authenticated
+    // page's content landing, not an exact URL string.
+    await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  } catch (setupError) {
+    await admin.auth.admin.deleteUser(userId).catch(() => {
+      // Best-effort: if the delete itself also fails here, there's no
+      // handle left to retry with, but we still must not mask the
+      // original setup failure below.
+    })
+    throw setupError
+  }
 
   return {
     email,
