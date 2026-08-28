@@ -1716,7 +1716,7 @@ Expected: FAIL — module doesn't exist.
 
 ```typescript
 // supabase/functions/server/rateLimit.ts
-import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 export const DAILY_IMPORT_LIMIT = 20;
 
@@ -1962,7 +1962,7 @@ Expected: PASS (5 tests).
 import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
-import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildImportApp } from "./routes/import.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
