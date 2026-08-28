@@ -25,10 +25,10 @@ export function buildImportApp(deps: ImportAppDeps) {
       return c.json({ error: "Daily import limit reached" }, 429);
     }
 
-    const { url } = await c.req.json<{ url: string }>();
-    const videoId = extractYoutubeVideoId(url);
-
     try {
+      const { url } = await c.req.json<{ url: string }>();
+      const videoId = extractYoutubeVideoId(url);
+
       let draft: RecipeDraft | null;
       const sourceType: "web" | "youtube" = videoId ? "youtube" : "web";
 
