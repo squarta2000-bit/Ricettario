@@ -22,12 +22,19 @@ test('shows check-your-email state after submitting the login form', async ({ pa
 test('sign in via a generated magic link and sign out', async ({ page }) => {
   // Uses the Admin API generateLink helper - no login form interaction, no
   // real network call to the rate-limited mailer endpoint at all.
-  await signInAsNewUser(page)
-  // HomePage renders nothing below the header until its async
-  // listRecipes() fetch resolves; wait for the (guaranteed, since this is
-  // a brand-new user) empty state before capturing the screenshot.
-  await expect(page.getByText('No recipes yet')).toBeVisible()
-  await page.screenshot({ path: 'e2e/screenshots/home.png' })
+  const { cleanup } = await signInAsNewUser(page)
+  try {
+    // HomePage renders nothing below the header until its async
+    // listRecipes() fetch resolves; wait for the (guaranteed, since this is
+    // a brand-new user) empty state before capturing the screenshot.
+    await expect(page.getByText('No recipes yet')).toBeVisible()
+    await page.screenshot({ path: 'e2e/screenshots/home.png' })
 
-  await signOut(page)
+    await signOut(page)
+  } finally {
+    // Always delete the throwaway user created above, even if an
+    // assertion above failed - otherwise every run leaves a permanent
+    // user behind on the hosted project.
+    await cleanup()
+  }
 })

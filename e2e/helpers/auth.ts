@@ -18,6 +18,24 @@ function requireServiceRoleKey(): string {
   return key
 }
 
+/** Result of {@link signInAsNewUser}: the signed-in email and a cleanup
+ * handle that removes the throwaway user from the hosted project. */
+export interface TestUserSession {
+  email: string
+  userId: string
+  /**
+   * Deletes the real `auth.users` row created by `generateLink` for this
+   * test run. Every test that calls `signInAsNewUser` MUST call this in a
+   * `finally` block - otherwise every suite run leaves another permanent,
+   * throwaway user behind on the hosted project (this is a personal
+   * project's own Supabase instance, not a disposable CI-only sandbox).
+   * Deleting the user cascades to their recipes/ingredients/steps via the
+   * `on delete cascade` FK from the schema, so no separate recipe cleanup
+   * is needed.
+   */
+  cleanup: () => Promise<void>
+}
+
 /**
  * Establishes an authenticated session WITHOUT ever calling the real
  * `signInWithOtp` / `/auth/v1/otp` endpoint. That endpoint sends a real
@@ -35,10 +53,12 @@ function requireServiceRoleKey(): string {
  * email, at zero cost against the mailer quota.
  *
  * Shared by auth.spec.ts and import-and-cook.spec.ts - every test that just
- * needs "an authenticated user" should use this, not the login form.
- * Returns the email that was signed in, in case a test wants to assert on it.
+ * needs "an authenticated user" should use this, not the login form. Every
+ * caller must run its test body in try/finally and call the returned
+ * `cleanup()` to delete the throwaway user afterward (see
+ * {@link TestUserSession}).
  */
-export async function signInAsNewUser(page: Page): Promise<string> {
+export async function signInAsNewUser(page: Page): Promise<TestUserSession> {
   const serviceRoleKey = requireServiceRoleKey()
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`
 
@@ -56,10 +76,14 @@ export async function signInAsNewUser(page: Page): Promise<string> {
     options: { redirectTo: baseURL },
   })
   const actionLink = data?.properties?.action_link
-  if (error || !actionLink) {
+  // generateLink's response includes the full created/existing user object
+  // (data.user.id) directly - no separate getUserByEmail/listUsers lookup
+  // needed to find the id to delete later.
+  const userId = data?.user?.id
+  if (error || !actionLink || !userId) {
     throw new Error(
       `Failed to generate a sign-in link via the Supabase Admin API: ${
-        error?.message ?? 'no action_link in the response'
+        error?.message ?? 'no action_link or user id in the response'
       }`,
     )
   }
@@ -71,7 +95,16 @@ export async function signInAsNewUser(page: Page): Promise<string> {
   // content landing, not an exact URL string.
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
 
-  return email
+  return {
+    email,
+    userId,
+    cleanup: async () => {
+      const { error: deleteError } = await admin.auth.admin.deleteUser(userId)
+      if (deleteError) {
+        throw new Error(`Failed to delete throwaway test user ${userId}: ${deleteError.message}`)
+      }
+    },
+  }
 }
 
 /** Clicks the app's "Sign out" control and waits for the redirect to /login. */
