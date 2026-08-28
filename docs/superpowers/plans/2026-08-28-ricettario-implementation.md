@@ -1,4 +1,4 @@
-# Clara Dashboard Implementation Plan
+# Ricettario Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 18.3.1, Vite 6.3.5, Tailwind 4.1.12, shadcn/Radix UI (already scaffolded), `@supabase/supabase-js` 2, Supabase Edge Functions (Hono on Deno), Anthropic TypeScript SDK (`claude-haiku-4-5`), Vitest (new, for pure-logic unit tests), Deno's built-in test runner (edge function integration tests), Playwright (new, E2E + visual screenshots), `react-router-dom` (new, client routing).
 
-**Spec:** `docs/superpowers/specs/2026-08-28-clara-dashboard-design.md`
+**Spec:** `docs/superpowers/specs/2026-08-28-ricettario-design.md`
 
 ## Global Constraints
 

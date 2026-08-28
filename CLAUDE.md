@@ -1,4 +1,4 @@
-# Project: Clara Dashboard
+# Project: Ricettario
 
 ## 1. What is this project?
 The aim is to create an web app to manage cooking recipes.

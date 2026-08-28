@@ -1,4 +1,4 @@
-# Clara Dashboard — Design Spec
+# Ricettario — Design Spec
 
 Date: 2026-08-28
 Status: Approved for planning
