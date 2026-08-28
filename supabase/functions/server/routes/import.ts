@@ -11,6 +11,7 @@ export interface ImportAppDeps {
   fetchYoutubeTranscript: (videoId: string) => Promise<string>;
   llmClientFactory: () => MessagesClient;
   countRecentImports: (userId: string) => Promise<number>;
+  recordImportAttempt: (userId: string) => Promise<void>;
 }
 
 export function buildImportApp(deps: ImportAppDeps) {
@@ -24,6 +25,10 @@ export function buildImportApp(deps: ImportAppDeps) {
     if (!hasImportCapacity(recentCount)) {
       return c.json({ error: "Daily import limit reached" }, 429);
     }
+
+    // Record the attempt now, before any network/LLM work — the limit bounds
+    // attempts (which is what actually costs money), not saved recipes.
+    await deps.recordImportAttempt(userId);
 
     try {
       const { url } = await c.req.json<{ url: string }>();

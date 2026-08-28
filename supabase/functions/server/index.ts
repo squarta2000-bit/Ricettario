@@ -5,7 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildImportApp } from "./routes/import.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
-import { countRecentImports } from "./rateLimit.ts";
+import { countRecentImports, recordImportAttempt } from "./rateLimit.ts";
 
 const app = new Hono();
 
@@ -41,6 +41,7 @@ app.route(
     fetchYoutubeTranscript: (videoId) => fetchYoutubeTranscript(videoId, fetch),
     llmClientFactory: () => createAnthropicMessagesClient(anthropicApiKey),
     countRecentImports: (userId) => countRecentImports(supabaseUrl, serviceRoleKey, userId),
+    recordImportAttempt: (userId) => recordImportAttempt(supabaseUrl, serviceRoleKey, userId),
   }),
 );
 

@@ -25,17 +25,22 @@ Deno.test("returns 401 when there is no Authorization header", async () => {
     fetchYoutubeTranscript: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
   });
   const response = await app.request("/server/import", { method: "POST", body: JSON.stringify({ url: "https://x.test" }) });
   assertEquals(response.status, 401);
 });
 
-Deno.test("returns 429 when the daily import limit is reached", async () => {
+Deno.test("returns 429 when the daily import limit is reached, without recording another attempt", async () => {
+  let attemptRecorded = false;
   const app = buildImportApp({
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 20,
+    recordImportAttempt: async () => {
+      attemptRecorded = true;
+    },
   });
   const response = await app.request("/server/import", {
     method: "POST",
@@ -43,6 +48,30 @@ Deno.test("returns 429 when the daily import limit is reached", async () => {
     body: JSON.stringify({ url: "https://x.test" }),
   });
   assertEquals(response.status, 429);
+  assertEquals(attemptRecorded, false);
+});
+
+Deno.test("records an import attempt for every accepted request, regardless of outcome", async () => {
+  let recordedForUserId: string | null = null;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async (userId) => {
+      recordedForUserId = userId;
+    },
+  });
+  // A URL fetch failure still counts as an attempt - the point of this limit
+  // is to bound how many times a user can trigger this route, not just the
+  // ones that happen to succeed.
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ url: "https://nonexistent.invalid/recipe" }),
+  });
+  assertEquals(response.status, 502);
+  assertEquals(recordedForUserId, "user-1");
 });
 
 Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
@@ -56,6 +85,7 @@ Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
         return fakeLlmClient({});
       },
       countRecentImports: async () => 0,
+      recordImportAttempt: async () => {},
     });
     const response = await app.request("/server/import", {
       method: "POST",
@@ -77,6 +107,7 @@ Deno.test("falls back to the LLM when there is no JSON-LD", async () => {
       llmClientFactory: () =>
         fakeLlmClient({ title: "Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
       countRecentImports: async () => 0,
+      recordImportAttempt: async () => {},
     });
     const response = await app.request("/server/import", {
       method: "POST",
@@ -96,6 +127,7 @@ Deno.test("routes YouTube URLs through the transcript path", async () => {
     llmClientFactory: () =>
       fakeLlmClient({ title: "Video Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
     countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
   });
   const response = await app.request("/server/import", {
     method: "POST",

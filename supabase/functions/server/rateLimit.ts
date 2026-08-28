@@ -14,10 +14,20 @@ export async function countRecentImports(
   const supabase = createClient(supabaseUrl, serviceRoleKey);
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { count, error } = await supabase
-    .from("recipes")
+    .from("import_attempts")
     .select("id", { count: "exact", head: true })
     .eq("owner_id", userId)
     .gte("created_at", since);
   if (error) throw new Error(error.message);
   return count ?? 0;
+}
+
+export async function recordImportAttempt(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+): Promise<void> {
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { error } = await supabase.from("import_attempts").insert({ owner_id: userId });
+  if (error) throw new Error(error.message);
 }
