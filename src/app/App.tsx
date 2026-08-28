@@ -3,6 +3,7 @@ import { AuthProvider } from './lib/authContext'
 import { RequireAuth } from './components/RequireAuth'
 import { Toaster } from './components/ui/sonner'
 import LoginPage from './pages/LoginPage'
+import HomePage from './pages/HomePage'
 
 export default function App() {
   return (
@@ -14,12 +15,7 @@ export default function App() {
             path="/"
             element={
               <RequireAuth>
-                <div className="min-h-screen bg-background">
-                  <div className="max-w-7xl mx-auto px-4 py-8 text-center text-muted-foreground py-16">
-                    <p className="text-xl mb-2">No recipes yet</p>
-                    <p>Home page comes in Task 5.</p>
-                  </div>
-                </div>
+                <HomePage />
               </RequireAuth>
             }
           />
