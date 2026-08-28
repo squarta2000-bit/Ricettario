@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getRecipe } from '../lib/recipesApi'
+import { playStepAlertSound } from '../lib/alertSound'
 import {
   startTimer,
   advanceStep,
@@ -20,6 +21,7 @@ export default function CookingModePage() {
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [, forceTick] = useState(0)
+  const [justAdvanced, setJustAdvanced] = useState(false)
   const alertedStepRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export default function CookingModePage() {
         const entryKey = `${current.currentStepIndex}:${current.stepStartedAtMs}`
         if (shouldAutoAdvance(current, recipe.steps, now) && alertedStepRef.current !== entryKey) {
           alertedStepRef.current = entryKey
+          playStepAlertSound()
+          setJustAdvanced(true)
           return advanceStep(current, recipe.steps, now)
         }
         return current
@@ -49,6 +53,12 @@ export default function CookingModePage() {
     }, 1000)
     return () => clearInterval(interval)
   }, [recipe, timer])
+
+  useEffect(() => {
+    if (!justAdvanced) return
+    const timeout = setTimeout(() => setJustAdvanced(false), 1500)
+    return () => clearTimeout(timeout)
+  }, [justAdvanced])
 
   if (error) {
     return (
@@ -94,15 +104,21 @@ export default function CookingModePage() {
           </>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-2">
-              Step {timer.currentStepIndex + 1} of {recipe.steps.length}
-            </p>
-            <p className="text-xl mb-4">{step.instruction}</p>
-            {remainingSeconds != null && (
-              <p className="text-4xl font-mono mb-6">
-                {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
+            <div
+              className={`rounded-lg p-4 mb-2 transition-colors duration-700 ${
+                justAdvanced ? 'bg-accent ring-2 ring-primary' : ''
+              }`}
+            >
+              <p className="text-sm text-muted-foreground mb-2">
+                Step {timer.currentStepIndex + 1} of {recipe.steps.length}
               </p>
-            )}
+              <p className="text-xl mb-4">{step.instruction}</p>
+              {remainingSeconds != null && (
+                <p className="text-4xl font-mono mb-6">
+                  {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
+                </p>
+              )}
+            </div>
             <div className="flex gap-2 justify-center">
               <Button
                 variant="outline"
