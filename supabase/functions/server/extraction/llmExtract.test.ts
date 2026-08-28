@@ -1,0 +1,33 @@
+import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { extractRecipeWithLlm, type MessagesClient } from "./llmExtract.ts";
+
+function fakeClient(responseText: string): MessagesClient {
+  return {
+    messages: {
+      create: async () => ({ content: [{ type: "text", text: responseText }] }),
+    },
+  };
+}
+
+Deno.test("parses a well-formed structured response into a RecipeDraft", async () => {
+  const draft = await extractRecipeWithLlm(
+    "some transcript text",
+    fakeClient(
+      JSON.stringify({
+        title: "Tomato Soup",
+        complexity: "Easy",
+        servings: "4",
+        ingredients: [{ rawText: "2 cans tomatoes", quantity: 2, unit: "cans", name: "tomatoes" }],
+        steps: [{ instruction: "Chop the onion.", estimatedMinutes: 5 }],
+      }),
+    ),
+  );
+  assertEquals(draft.title, "Tomato Soup");
+  assertEquals(draft.ingredients[0].name, "tomatoes");
+  assertEquals(draft.steps[0].estimatedMinutes, 5);
+});
+
+Deno.test("throws when the model returns no text block", async () => {
+  const client: MessagesClient = { messages: { create: async () => ({ content: [] }) } };
+  await assertRejects(() => extractRecipeWithLlm("text", client), Error, "No structured output returned");
+});
