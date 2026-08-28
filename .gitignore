@@ -3,3 +3,6 @@ dist/
 .superpowers/
 .env
 .env.local
+supabase/.temp/*
+!supabase/.temp/cli-latest
+!supabase/.temp/linked-project.json
