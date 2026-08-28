@@ -19,7 +19,7 @@ export default function CookingModePage() {
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [, forceTick] = useState(0)
-  const alertedStepRef = useRef<number | null>(null)
+  const alertedStepRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (id) getRecipe(id).then((r) => {
@@ -34,8 +34,9 @@ export default function CookingModePage() {
       const now = Date.now()
       setTimer((current) => {
         if (!current) return current
-        if (shouldAutoAdvance(current, recipe.steps, now) && alertedStepRef.current !== current.currentStepIndex) {
-          alertedStepRef.current = current.currentStepIndex
+        const entryKey = `${current.currentStepIndex}:${current.stepStartedAtMs}`
+        if (shouldAutoAdvance(current, recipe.steps, now) && alertedStepRef.current !== entryKey) {
+          alertedStepRef.current = entryKey
           return advanceStep(current, recipe.steps, now)
         }
         return current
