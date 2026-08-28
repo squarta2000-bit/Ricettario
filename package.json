@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node ./node_modules/vite/bin/vite.js build",
-    "dev": "vite"
+    "dev": "vite",
+    "test": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",
@@ -59,6 +60,7 @@
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "vitest": "^2.1.0"
   }
 }
