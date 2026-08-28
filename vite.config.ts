@@ -29,4 +29,21 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src/app'),
     },
   },
+  test: {
+    // Vitest's default `include` pattern (**/*.{test,spec}.ts) would also
+    // pick up the Playwright specs under e2e/, which fail immediately
+    // under Vitest's runner (they call Playwright's own `test()`, a
+    // different test framework entirely - see e2e/*.spec.ts, run via
+    // `npm run test:e2e` / `playwright test` instead). Excluding e2e/ here
+    // keeps `npm run test` scoped to the Vitest unit suite, on top of
+    // Vitest's own defaults.
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+      'e2e/**',
+    ],
+  },
 })
