@@ -1187,7 +1187,7 @@ export interface RecipeDraft {
 
 ```typescript
 // supabase/functions/server/extraction/jsonld.test.ts
-import { assertEquals, assertExists } from "jsr:@std/assert";
+import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { findRecipeJsonLd, jsonLdToDraft } from "./jsonld.ts";
 
 const HTML_WITH_RECIPE = `
@@ -1367,7 +1367,7 @@ git commit -m "feat: add schema.org JSON-LD recipe parser (zero-LLM-cost path)"
 
 ```typescript
 // supabase/functions/server/extraction/htmlToText.test.ts
-import { assertEquals, assertStringIncludes } from "jsr:@std/assert";
+import { assertEquals, assertStringIncludes } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { htmlToVisibleText } from "./htmlToText.ts";
 
 Deno.test("strips scripts, styles, and tags, keeping visible text", () => {
@@ -1453,7 +1453,7 @@ Invoke the `claude-api` skill (`/claude-api`) and read its TypeScript structured
 
 ```typescript
 // supabase/functions/server/extraction/llmExtract.test.ts
-import { assertEquals, assertRejects } from "jsr:@std/assert";
+import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { extractRecipeWithLlm, type MessagesClient } from "./llmExtract.ts";
 
 function fakeClient(responseText: string): MessagesClient {
@@ -1595,7 +1595,7 @@ git commit -m "feat: add Claude Haiku 4.5 structured recipe extraction (client i
 
 ```typescript
 // supabase/functions/server/extraction/youtubeTranscript.test.ts
-import { assertEquals, assertRejects } from "jsr:@std/assert";
+import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { extractYoutubeVideoId, fetchYoutubeTranscript } from "./youtubeTranscript.ts";
 
 Deno.test("extracts the video id from common YouTube URL shapes", () => {
@@ -1693,7 +1693,7 @@ git commit -m "feat: add YouTube video-id parsing and transcript fetcher"
 
 ```typescript
 // supabase/functions/server/rateLimit.test.ts
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { hasImportCapacity, DAILY_IMPORT_LIMIT } from "./rateLimit.ts";
 
 Deno.test("allows imports below the daily limit", () => {
@@ -1772,7 +1772,7 @@ These use a real local HTTP server for fixture HTML (so the route's real `fetch(
 
 ```typescript
 // supabase/functions/server/routes/import.test.ts
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { buildImportApp } from "./import.ts";
 import type { MessagesClient } from "../extraction/llmExtract.ts";
 
