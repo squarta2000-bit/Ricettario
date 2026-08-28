@@ -5,6 +5,7 @@ import { Toaster } from './components/ui/sonner'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import RecipeDetailPage from './pages/RecipeDetailPage'
+import CookingModePage from './pages/CookingModePage'
 
 export default function App() {
   return (
@@ -25,6 +26,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <RecipeDetailPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/recipe/:id/cook"
+            element={
+              <RequireAuth>
+                <CookingModePage />
               </RequireAuth>
             }
           />

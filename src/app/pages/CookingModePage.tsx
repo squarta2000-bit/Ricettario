@@ -1,0 +1,98 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { getRecipe } from '../lib/recipesApi'
+import {
+  startTimer,
+  advanceStep,
+  goToStep,
+  pauseTimer,
+  resumeTimer,
+  shouldAutoAdvance,
+  elapsedMsForCurrentStep,
+  type TimerState,
+} from '../lib/timerEngine'
+import type { RecipeWithDetails } from '../lib/types'
+import { Button } from '../components/ui/button'
+
+export default function CookingModePage() {
+  const { id } = useParams<{ id: string }>()
+  const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
+  const [timer, setTimer] = useState<TimerState | null>(null)
+  const [, forceTick] = useState(0)
+  const alertedStepRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (id) getRecipe(id).then((r) => {
+      setRecipe(r)
+      setTimer(startTimer(Date.now()))
+    })
+  }, [id])
+
+  useEffect(() => {
+    if (!recipe || !timer) return
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setTimer((current) => {
+        if (!current) return current
+        if (shouldAutoAdvance(current, recipe.steps, now) && alertedStepRef.current !== current.currentStepIndex) {
+          alertedStepRef.current = current.currentStepIndex
+          return advanceStep(current, recipe.steps, now)
+        }
+        return current
+      })
+      forceTick((t) => t + 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [recipe, timer])
+
+  if (!recipe || !timer) return null
+
+  const step = recipe.steps[timer.currentStepIndex]
+  const elapsedSeconds = Math.floor(elapsedMsForCurrentStep(timer, Date.now()) / 1000)
+  const remainingSeconds = step.estimatedMinutes != null ? Math.max(0, step.estimatedMinutes * 60 - elapsedSeconds) : null
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="max-w-xl w-full px-4 text-center">
+        {timer.isDone ? (
+          <>
+            <h1 className="text-2xl font-normal mb-4">Done cooking!</h1>
+            <Button asChild>
+              <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground mb-2">
+              Step {timer.currentStepIndex + 1} of {recipe.steps.length}
+            </p>
+            <p className="text-xl mb-4">{step.instruction}</p>
+            {remainingSeconds != null && (
+              <p className="text-4xl font-mono mb-6">
+                {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
+              </p>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setTimer(goToStep(timer, timer.currentStepIndex - 1, recipe.steps, Date.now()))}
+                disabled={timer.currentStepIndex === 0}
+              >
+                Back
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setTimer(timer.isPaused ? resumeTimer(timer, Date.now()) : pauseTimer(timer, Date.now()))}
+              >
+                {timer.isPaused ? 'Resume' : 'Pause'}
+              </Button>
+              <Button onClick={() => setTimer(advanceStep(timer, recipe.steps, Date.now()))}>
+                Next step
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
