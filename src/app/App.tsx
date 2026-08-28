@@ -4,6 +4,7 @@ import { RequireAuth } from './components/RequireAuth'
 import { Toaster } from './components/ui/sonner'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
+import RecipeDetailPage from './pages/RecipeDetailPage'
 
 export default function App() {
   return (
@@ -16,6 +17,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <HomePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/recipe/:id"
+            element={
+              <RequireAuth>
+                <RecipeDetailPage />
               </RequireAuth>
             }
           />
