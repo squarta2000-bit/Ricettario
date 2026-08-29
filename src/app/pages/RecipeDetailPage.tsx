@@ -42,14 +42,16 @@ export default function RecipeDetailPage() {
               <p className="text-sm text-muted-foreground">{recipe.complexity}</p>
             )}
           </div>
-          <a
-            href={recipe.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            Source <ExternalLink className="size-4" />
-          </a>
+          {recipe.sourceUrl && (
+            <a
+              href={recipe.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Source <ExternalLink className="size-4" />
+            </a>
+          )}
         </div>
 
         <Button asChild className="mb-8">

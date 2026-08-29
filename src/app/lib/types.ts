@@ -20,8 +20,8 @@ export interface Recipe {
   id: string
   ownerId: string
   title: string
-  sourceUrl: string
-  sourceType: 'web' | 'youtube'
+  sourceUrl: string | null
+  sourceType: 'web' | 'youtube' | 'photo' | 'text'
   imageUrl: string | null
   complexity: string | null
   servings: string | null
