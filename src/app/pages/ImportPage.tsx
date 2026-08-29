@@ -1,17 +1,28 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { saveRecipe } from '../lib/recipesApi'
 import type { RecipeDraft } from '../lib/types'
+import { compressImageFile, type CompressedImage } from '../lib/imageResize'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 
-type ImportMode = 'url' | 'text'
-type SourceType = 'web' | 'youtube' | 'text'
+type ImportMode = 'url' | 'photos' | 'text'
+type SourceType = 'web' | 'youtube' | 'photo' | 'text'
 
-type ImportRequestBody = { type: 'url'; url: string } | { type: 'text'; text: string }
+type ImportRequestBody =
+  | { type: 'url'; url: string }
+  | { type: 'text'; text: string }
+  | { type: 'images'; images: CompressedImage[] }
+
+const MAX_PHOTOS = 5
+
+interface StagedPhoto {
+  previewUrl: string
+  compressed: CompressedImage
+}
 
 export default function ImportPage() {
   const navigate = useNavigate()
@@ -22,6 +33,47 @@ export default function ImportPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [draft, setDraft] = useState<RecipeDraft | null>(null)
   const [sourceType, setSourceType] = useState<SourceType>('web')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [photos, setPhotos] = useState<StagedPhoto[]>([])
+  const [isCompressing, setIsCompressing] = useState(false)
+
+  function handleAddPhotoClick() {
+    fileInputRef.current?.click()
+  }
+
+  async function handlePhotosSelected(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (files.length === 0) return
+
+    const remainingCapacity = MAX_PHOTOS - photos.length
+    const filesToAdd = files.slice(0, remainingCapacity)
+
+    setIsCompressing(true)
+    try {
+      const newPhotos = await Promise.all(
+        filesToAdd.map(async (file) => ({
+          previewUrl: URL.createObjectURL(file),
+          compressed: await compressImageFile(file),
+        })),
+      )
+      setPhotos((current) => [...current, ...newPhotos])
+    } finally {
+      setIsCompressing(false)
+    }
+  }
+
+  function handleRemovePhoto(index: number) {
+    setPhotos((current) => {
+      URL.revokeObjectURL(current[index].previewUrl)
+      return current.filter((_, i) => i !== index)
+    })
+  }
+
+  function handlePhotosSubmit(event: FormEvent) {
+    event.preventDefault()
+    runImport({ type: 'images', images: photos.map((p) => p.compressed) })
+  }
 
   async function runImport(body: ImportRequestBody) {
     setStatus('importing')
@@ -89,6 +141,7 @@ export default function ImportPage() {
           <Tabs value={mode} onValueChange={(value) => setMode(value as ImportMode)}>
             <TabsList className="w-full">
               <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
+              <TabsTrigger value="photos" className="flex-1">Take Photos</TabsTrigger>
               <TabsTrigger value="text" className="flex-1">Paste Text</TabsTrigger>
             </TabsList>
             <TabsContent value="url">
@@ -101,6 +154,46 @@ export default function ImportPage() {
                 />
                 <Button type="submit" className="w-full" disabled={status === 'importing'}>
                   {status === 'importing' ? 'Importing…' : 'Import'}
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="photos" className="space-y-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                multiple
+                className="hidden"
+                onChange={handlePhotosSelected}
+              />
+              <div className="flex flex-wrap gap-2">
+                {photos.map((photo, index) => (
+                  <div key={photo.previewUrl} className="relative">
+                    <img src={photo.previewUrl} alt={`Recipe photo ${index + 1}`} className="size-20 object-cover rounded-md" />
+                    <button
+                      type="button"
+                      aria-label={`Remove photo ${index + 1}`}
+                      onClick={() => handleRemovePhoto(index)}
+                      className="absolute -top-2 -right-2 flex items-center justify-center size-5 rounded-full bg-destructive text-white text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleAddPhotoClick}
+                disabled={photos.length >= MAX_PHOTOS || isCompressing}
+              >
+                {isCompressing ? 'Processing…' : 'Add photo'}
+              </Button>
+              <form onSubmit={handlePhotosSubmit}>
+                <Button type="submit" className="w-full" disabled={photos.length === 0 || status === 'importing'}>
+                  {status === 'importing' ? 'Extracting…' : 'Extract recipe from photos'}
                 </Button>
               </form>
             </TabsContent>
