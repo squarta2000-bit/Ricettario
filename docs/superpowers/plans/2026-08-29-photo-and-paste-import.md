@@ -18,7 +18,7 @@
 - Max 5 photos per import, enforced in two places: client-side (disable "Add photo" once 5 are staged) and server-side (400 if the `images` array has 0 or more than 5 entries).
 - LLM model for every extraction call (text, images, or the existing URL path): `claude-haiku-4-5`, via `output_config: { format: { type: "json_schema", schema: DRAFT_SCHEMA } }` — unchanged from the existing code.
 - `src/app/lib/types.ts`'s `RecipeDraft`/`RecipeDraftIngredient`/`RecipeDraftStep` are hand-mirrored against `supabase/functions/server/extraction/types.ts` (no shared package between the Deno edge function and the Vite frontend) — keep both in sync whenever one changes.
-- Verification commands available in this repo: `npm test` (Vitest, frontend), `npm run build` (tsc + vite build), `npm run test:e2e` (Playwright), `deno test <path>` (backend, e.g. `deno test supabase/functions/server/routes/import.test.ts`).
+- Verification commands available in this repo: `npm test` (Vitest, frontend), `npm run build` (tsc + vite build), `npm run test:e2e` (Playwright), `deno test --allow-net <path>` (backend — the `--allow-net` flag is required because import.test.ts spins up a local fixture HTTP server; e.g. `deno test --allow-net supabase/functions/server/routes/import.test.ts`).
 
 ## Files
 
@@ -198,7 +198,7 @@ export function createAnthropicMessagesClient(apiKey: string): MessagesClient {
 
 - [ ] **Step 3: Run the existing extraction test to confirm the refactor didn't change behavior**
 
-Run: `deno test supabase/functions/server/extraction/llmExtract.test.ts`
+Run: `deno test --allow-net supabase/functions/server/extraction/llmExtract.test.ts`
 Expected: PASS (all 3 existing tests, unchanged)
 
 - [ ] **Step 4: Add the `text` import path to `import.ts`**
@@ -332,7 +332,7 @@ Also update every existing test in the file that builds a request body as `{ url
 
 - [ ] **Step 6: Run the full import route test file**
 
-Run: `deno test supabase/functions/server/routes/import.test.ts`
+Run: `deno test --allow-net supabase/functions/server/routes/import.test.ts`
 Expected: PASS (7 existing tests updated to the new body shape + 2 new tests = 9 total)
 
 - [ ] **Step 7: Commit**
@@ -447,7 +447,7 @@ Deno.test("sends one text instruction block followed by an image block per photo
 
 - [ ] **Step 3: Run the new test file**
 
-Run: `deno test supabase/functions/server/extraction/llmExtractImages.test.ts`
+Run: `deno test --allow-net supabase/functions/server/extraction/llmExtractImages.test.ts`
 Expected: PASS (1 test)
 
 - [ ] **Step 4: Add the `images` import path to `import.ts`**
@@ -548,7 +548,7 @@ Deno.test("rejects an images request with more than 5 photos", async () => {
 
 - [ ] **Step 6: Run the full import route test file**
 
-Run: `deno test supabase/functions/server/routes/import.test.ts`
+Run: `deno test --allow-net supabase/functions/server/routes/import.test.ts`
 Expected: PASS (9 existing + 3 new = 12 total)
 
 - [ ] **Step 7: Commit**
