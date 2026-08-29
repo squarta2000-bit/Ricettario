@@ -36,6 +36,7 @@ export default function ImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<StagedPhoto[]>([])
   const [isCompressing, setIsCompressing] = useState(false)
+  const [photosError, setPhotosError] = useState<string | null>(null)
 
   function handleAddPhotoClick() {
     fileInputRef.current?.click()
@@ -50,14 +51,20 @@ export default function ImportPage() {
     const filesToAdd = files.slice(0, remainingCapacity)
 
     setIsCompressing(true)
+    setPhotosError(null)
+    const createdPreviewUrls: string[] = []
     try {
       const newPhotos = await Promise.all(
-        filesToAdd.map(async (file) => ({
-          previewUrl: URL.createObjectURL(file),
-          compressed: await compressImageFile(file),
-        })),
+        filesToAdd.map(async (file) => {
+          const previewUrl = URL.createObjectURL(file)
+          createdPreviewUrls.push(previewUrl)
+          return { previewUrl, compressed: await compressImageFile(file) }
+        }),
       )
       setPhotos((current) => [...current, ...newPhotos])
+    } catch (err) {
+      createdPreviewUrls.forEach((url) => URL.revokeObjectURL(url))
+      setPhotosError(err instanceof Error ? err.message : 'Failed to process one of the selected photos.')
     } finally {
       setIsCompressing(false)
     }
@@ -119,7 +126,7 @@ export default function ImportPage() {
       const id = await saveRecipe({
         title: draft.title,
         sourceUrl: mode === 'url' ? url : null,
-        sourceType,
+        sourceType: mode === 'url' ? sourceType : mode === 'photos' ? 'photo' : 'text',
         imageUrl: draft.imageUrl,
         complexity: draft.complexity,
         servings: draft.servings,
@@ -182,6 +189,7 @@ export default function ImportPage() {
                   </div>
                 ))}
               </div>
+              {photosError && <p className="text-destructive text-sm">{photosError}</p>}
               <Button
                 type="button"
                 variant="outline"

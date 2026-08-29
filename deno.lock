@@ -133,6 +133,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@playwright/test@^1.62.1",
         "npm:@radix-ui/react-accordion@1.2.3",
         "npm:@radix-ui/react-alert-dialog@1.1.6",
         "npm:@radix-ui/react-aspect-ratio@1.1.2",

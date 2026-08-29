@@ -17,11 +17,6 @@ export interface ImportAppDeps {
 
 const MAX_IMAGES = 5;
 
-type ImportRequestBody =
-  | { type: "url"; url: string }
-  | { type: "text"; text: string }
-  | { type: "images"; images: ImageInput[] };
-
 export function buildImportApp(deps: ImportAppDeps) {
   const app = new Hono();
 
@@ -39,29 +34,37 @@ export function buildImportApp(deps: ImportAppDeps) {
     await deps.recordImportAttempt(userId);
 
     try {
-      const body = await c.req.json<ImportRequestBody>();
+      const rawBody = await c.req.json<Record<string, unknown>>();
+      const type = typeof rawBody?.type === "string"
+        ? rawBody.type
+        : typeof rawBody?.url === "string"
+          ? "url"
+          : undefined;
 
       let draft: RecipeDraft | null;
       let sourceType: "web" | "youtube" | "text" | "photo";
 
-      if (body.type === "text") {
+      if (type === "text") {
+        if (typeof rawBody.text !== "string") return c.json({ error: "Missing text" }, 400);
         sourceType = "text";
-        draft = await extractRecipeWithLlm(body.text, deps.llmClientFactory());
-      } else if (body.type === "images") {
-        if (body.images.length === 0 || body.images.length > MAX_IMAGES) {
+        draft = await extractRecipeWithLlm(rawBody.text, deps.llmClientFactory());
+      } else if (type === "images") {
+        if (!Array.isArray(rawBody.images) || rawBody.images.length === 0 || rawBody.images.length > MAX_IMAGES) {
           return c.json({ error: `Provide between 1 and ${MAX_IMAGES} photos` }, 400);
         }
         sourceType = "photo";
-        draft = await extractRecipeFromImages(body.images, deps.llmClientFactory());
-      } else if (body.type === "url") {
-        const videoId = extractYoutubeVideoId(body.url);
+        draft = await extractRecipeFromImages(rawBody.images as ImageInput[], deps.llmClientFactory());
+      } else if (type === "url") {
+        if (typeof rawBody.url !== "string") return c.json({ error: "Missing url" }, 400);
+        const url = rawBody.url;
+        const videoId = extractYoutubeVideoId(url);
         sourceType = videoId ? "youtube" : "web";
 
         if (videoId) {
           const transcript = await deps.fetchYoutubeTranscript(videoId);
           draft = await extractRecipeWithLlm(transcript, deps.llmClientFactory());
         } else {
-          const pageResponse = await fetch(body.url);
+          const pageResponse = await fetch(url);
           if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);
           const html = await pageResponse.text();
           const jsonLd = findRecipeJsonLd(html);
@@ -71,7 +74,7 @@ export function buildImportApp(deps: ImportAppDeps) {
           }
         }
       } else {
-        throw new Error(`Unsupported import type: ${(body as { type: string }).type}`);
+        return c.json({ error: `Unsupported import type: ${String(type)}` }, 400);
       }
 
       return c.json({ draft, sourceType });

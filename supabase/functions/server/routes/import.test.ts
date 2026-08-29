@@ -168,7 +168,7 @@ Deno.test("extracts a recipe from pasted text via the LLM, skipping the URL/tran
   assertEquals(transcriptFetched, false);
 });
 
-Deno.test("returns 502 with a descriptive message for an unrecognized import type", async () => {
+Deno.test("returns 400 with a descriptive message for an unrecognized import type", async () => {
   const app = buildImportApp({
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
@@ -182,8 +182,109 @@ Deno.test("returns 502 with a descriptive message for an unrecognized import typ
     body: JSON.stringify({ type: "bogus" }),
   });
   const body = await response.json();
-  assertEquals(response.status, 502);
+  assertEquals(response.status, 400);
   assertEquals(body.error, "Unsupported import type: bogus");
+});
+
+Deno.test("treats a bare { url } body with no type field as a URL import", async () => {
+  await withFixtureServer(JSONLD_HTML, async (url) => {
+    const app = buildImportApp({
+      getUserId: async () => "user-1",
+      fetchYoutubeTranscript: async () => "",
+      llmClientFactory: () => fakeLlmClient({}),
+      countRecentImports: async () => 0,
+      recordImportAttempt: async () => {},
+    });
+    const response = await app.request("/server/import", {
+      method: "POST",
+      headers: { Authorization: "Bearer token" },
+      body: JSON.stringify({ url }),
+    });
+    const body = await response.json();
+    assertEquals(response.status, 200);
+    assertEquals(body.sourceType, "web");
+    assertEquals(body.draft.title, "Soup");
+  });
+});
+
+Deno.test("returns 400 for type: text with a missing text field", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text" }),
+  });
+  assertEquals(response.status, 400);
+});
+
+Deno.test("returns 400 for type: url with a missing url field", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "url" }),
+  });
+  assertEquals(response.status, 400);
+});
+
+Deno.test("returns 400 for type: images with a missing images field", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "images" }),
+  });
+  assertEquals(response.status, 400);
+});
+
+Deno.test("returns 400 for type: images with images not an array", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "images", images: "not-an-array" }),
+  });
+  assertEquals(response.status, 400);
+});
+
+Deno.test("returns 400 for a body with no type and no url", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({}),
+  });
+  assertEquals(response.status, 400);
 });
 
 Deno.test("extracts a recipe from photos via the LLM vision call", async () => {
