@@ -6,15 +6,20 @@ test('shows check-your-email state after submitting the login form', async ({ pa
   // own idle -> sending -> sent state transition without ever sending a
   // real email (Supabase's default mailer is capped at ~2 sends/hour
   // project-wide, with no custom SMTP configured for this project).
-  await page.route('**/auth/v1/otp', async (route) => {
+  // The trailing `**` is required: the real request always carries a
+  // `?redirect_to=...` query string (from emailRedirectTo), and without a
+  // wildcard after `otp` the glob is end-anchored and never matches, so the
+  // route silently falls through to a real (rate-limited) network call.
+  await page.route('**/auth/v1/otp**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
   })
 
   await page.goto('/login')
   await page.screenshot({ path: 'e2e/screenshots/login.png' })
 
+  await page.getByRole('tab', { name: 'Sign Up' }).click()
   await page.getByPlaceholder('you@example.com').fill('e2e-ui-check@example.com')
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign up' }).click()
 
   await expect(page.getByText('Check your email')).toBeVisible()
 })
@@ -37,4 +42,30 @@ test('sign in via a generated magic link and sign out', async ({ page }) => {
     // user behind on the hosted project.
     await cleanup()
   }
+})
+
+test('log in with just an email after being confirmed once, no email sent', async ({ page }) => {
+  const { email, cleanup } = await signInAsNewUser(page)
+  try {
+    await signOut(page)
+
+    await page.goto('/login')
+    await page.getByPlaceholder('you@example.com').fill(email)
+    await page.getByRole('button', { name: 'Log in' }).click()
+
+    // A fresh, real call to /server/login against the hosted project -
+    // no magic-link email involved, this is the passwordless "just check
+    // the email exists" flow landing on the authenticated home page.
+    await expect(page.getByText('No recipes yet')).toBeVisible()
+  } finally {
+    await cleanup()
+  }
+})
+
+test('rejects login for an email that was never signed up', async ({ page }) => {
+  await page.goto('/login')
+  await page.getByPlaceholder('you@example.com').fill(`never-signed-up-${Date.now()}@example.com`)
+  await page.getByRole('button', { name: 'Log in' }).click()
+
+  await expect(page.getByText('No account found for that email. Sign up first.')).toBeVisible()
 })

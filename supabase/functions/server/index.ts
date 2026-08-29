@@ -3,9 +3,12 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildImportApp } from "./routes/import.ts";
+import { buildLoginApp } from "./routes/login.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
+import { mintSessionForEmail } from "./auth/mintSession.ts";
 import { countRecentImports, recordImportAttempt } from "./rateLimit.ts";
+import { findConfirmedUserIdByEmail } from "./userLookup.ts";
 
 const app = new Hono();
 
@@ -14,7 +17,7 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "x-client-info", "apikey"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
@@ -42,6 +45,15 @@ app.route(
     llmClientFactory: () => createAnthropicMessagesClient(anthropicApiKey),
     countRecentImports: (userId) => countRecentImports(supabaseUrl, serviceRoleKey, userId),
     recordImportAttempt: (userId) => recordImportAttempt(supabaseUrl, serviceRoleKey, userId),
+  }),
+);
+
+app.route(
+  "/",
+  buildLoginApp({
+    findConfirmedUserIdByEmail: (email) => findConfirmedUserIdByEmail(supabaseUrl, serviceRoleKey, email),
+    mintSessionForEmail: (email) =>
+      mintSessionForEmail(email, createClient(supabaseUrl, serviceRoleKey), fetch),
   }),
 );
 
