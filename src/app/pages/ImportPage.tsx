@@ -6,29 +6,36 @@ import type { RecipeDraft } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+
+type ImportMode = 'url' | 'text'
+type SourceType = 'web' | 'youtube' | 'text'
+
+type ImportRequestBody = { type: 'url'; url: string } | { type: 'text'; text: string }
 
 export default function ImportPage() {
   const navigate = useNavigate()
+  const [mode, setMode] = useState<ImportMode>('url')
   const [url, setUrl] = useState('')
+  const [pastedText, setPastedText] = useState('')
   const [status, setStatus] = useState<'idle' | 'importing' | 'reviewing' | 'error' | 'saving'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [draft, setDraft] = useState<RecipeDraft | null>(null)
-  const [sourceType, setSourceType] = useState<'web' | 'youtube'>('web')
+  const [sourceType, setSourceType] = useState<SourceType>('web')
 
-  async function handleImport(event: FormEvent) {
-    event.preventDefault()
+  async function runImport(body: ImportRequestBody) {
     setStatus('importing')
     const { data: sessionData } = await supabase.auth.getSession()
     const { data, error } = await supabase.functions.invoke('server/import', {
-      body: { url },
+      body,
       headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
     })
     if (error || !data?.draft) {
       let message = 'Import failed. You can still fill this in manually.'
       if (error) {
         try {
-          const body = await error.context.json()
-          if (body?.error) message = body.error
+          const errorBody = await error.context.json()
+          if (errorBody?.error) message = errorBody.error
         } catch {
           // fall back to the generic message above
         }
@@ -43,13 +50,23 @@ export default function ImportPage() {
     setStatus('reviewing')
   }
 
+  function handleUrlSubmit(event: FormEvent) {
+    event.preventDefault()
+    runImport({ type: 'url', url })
+  }
+
+  function handleTextSubmit(event: FormEvent) {
+    event.preventDefault()
+    runImport({ type: 'text', text: pastedText })
+  }
+
   async function handleSave() {
     if (!draft) return
     setStatus('saving')
     try {
       const id = await saveRecipe({
         title: draft.title,
-        sourceUrl: url,
+        sourceUrl: mode === 'url' ? url : null,
         sourceType,
         imageUrl: draft.imageUrl,
         complexity: draft.complexity,
@@ -67,18 +84,42 @@ export default function ImportPage() {
   if (status === 'idle' || status === 'importing') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <form onSubmit={handleImport} className="w-full max-w-md space-y-4 px-4">
+        <div className="w-full max-w-md space-y-4 px-4">
           <h1 className="text-2xl font-normal text-center">Import a recipe</h1>
-          <Input
-            placeholder="https://example.com/recipe or a YouTube URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full" disabled={status === 'importing'}>
-            {status === 'importing' ? 'Importing…' : 'Import'}
-          </Button>
-        </form>
+          <Tabs value={mode} onValueChange={(value) => setMode(value as ImportMode)}>
+            <TabsList className="w-full">
+              <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
+              <TabsTrigger value="text" className="flex-1">Paste Text</TabsTrigger>
+            </TabsList>
+            <TabsContent value="url">
+              <form onSubmit={handleUrlSubmit} className="space-y-4">
+                <Input
+                  placeholder="https://example.com/recipe or a YouTube URL"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                />
+                <Button type="submit" className="w-full" disabled={status === 'importing'}>
+                  {status === 'importing' ? 'Importing…' : 'Import'}
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="text">
+              <form onSubmit={handleTextSubmit} className="space-y-4">
+                <Textarea
+                  placeholder="Paste the recipe text here"
+                  rows={10}
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  required
+                />
+                <Button type="submit" className="w-full" disabled={status === 'importing'}>
+                  {status === 'importing' ? 'Extracting…' : 'Extract recipe from text'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     )
   }
