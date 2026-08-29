@@ -27,7 +27,10 @@ Deno.test("returns 401 when there is no Authorization header", async () => {
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
   });
-  const response = await app.request("/server/import", { method: "POST", body: JSON.stringify({ url: "https://x.test" }) });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    body: JSON.stringify({ type: "url", url: "https://x.test" }),
+  });
   assertEquals(response.status, 401);
 });
 
@@ -45,7 +48,7 @@ Deno.test("returns 429 when the daily import limit is reached, without recording
   const response = await app.request("/server/import", {
     method: "POST",
     headers: { Authorization: "Bearer token" },
-    body: JSON.stringify({ url: "https://x.test" }),
+    body: JSON.stringify({ type: "url", url: "https://x.test" }),
   });
   assertEquals(response.status, 429);
   assertEquals(attemptRecorded, false);
@@ -68,7 +71,7 @@ Deno.test("records an import attempt for every accepted request, regardless of o
   const response = await app.request("/server/import", {
     method: "POST",
     headers: { Authorization: "Bearer token" },
-    body: JSON.stringify({ url: "https://nonexistent.invalid/recipe" }),
+    body: JSON.stringify({ type: "url", url: "https://nonexistent.invalid/recipe" }),
   });
   assertEquals(response.status, 502);
   assertEquals(recordedForUserId, "user-1");
@@ -90,7 +93,7 @@ Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
     const response = await app.request("/server/import", {
       method: "POST",
       headers: { Authorization: "Bearer token" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ type: "url", url }),
     });
     const body = await response.json();
     assertEquals(response.status, 200);
@@ -112,7 +115,7 @@ Deno.test("falls back to the LLM when there is no JSON-LD", async () => {
     const response = await app.request("/server/import", {
       method: "POST",
       headers: { Authorization: "Bearer token" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ type: "url", url }),
     });
     const body = await response.json();
     assertEquals(response.status, 200);
@@ -132,10 +135,53 @@ Deno.test("routes YouTube URLs through the transcript path", async () => {
   const response = await app.request("/server/import", {
     method: "POST",
     headers: { Authorization: "Bearer token" },
-    body: JSON.stringify({ url: "https://youtu.be/abcdefghijk" }),
+    body: JSON.stringify({ type: "url", url: "https://youtu.be/abcdefghijk" }),
   });
   const body = await response.json();
   assertEquals(response.status, 200);
   assertEquals(body.sourceType, "youtube");
   assertEquals(body.draft.title, "Video Soup");
+});
+
+Deno.test("extracts a recipe from pasted text via the LLM, skipping the URL/transcript path", async () => {
+  let transcriptFetched = false;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => {
+      transcriptFetched = true;
+      return "";
+    },
+    llmClientFactory: () =>
+      fakeLlmClient({ title: "Text Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text", text: "Chop onions. Simmer for ten minutes." }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.sourceType, "text");
+  assertEquals(body.draft.title, "Text Soup");
+  assertEquals(transcriptFetched, false);
+});
+
+Deno.test("returns 502 with a descriptive message for an unrecognized import type", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "bogus" }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 502);
+  assertEquals(body.error, "Unsupported import type: bogus");
 });

@@ -14,6 +14,8 @@ export interface ImportAppDeps {
   recordImportAttempt: (userId: string) => Promise<void>;
 }
 
+type ImportRequestBody = { type: "url"; url: string } | { type: "text"; text: string };
+
 export function buildImportApp(deps: ImportAppDeps) {
   const app = new Hono();
 
@@ -31,24 +33,33 @@ export function buildImportApp(deps: ImportAppDeps) {
     await deps.recordImportAttempt(userId);
 
     try {
-      const { url } = await c.req.json<{ url: string }>();
-      const videoId = extractYoutubeVideoId(url);
+      const body = await c.req.json<ImportRequestBody>();
 
       let draft: RecipeDraft | null;
-      const sourceType: "web" | "youtube" = videoId ? "youtube" : "web";
+      let sourceType: "web" | "youtube" | "text";
 
-      if (videoId) {
-        const transcript = await deps.fetchYoutubeTranscript(videoId);
-        draft = await extractRecipeWithLlm(transcript, deps.llmClientFactory());
-      } else {
-        const pageResponse = await fetch(url);
-        if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);
-        const html = await pageResponse.text();
-        const jsonLd = findRecipeJsonLd(html);
-        draft = jsonLd ? jsonLdToDraft(jsonLd) : null;
-        if (!draft) {
-          draft = await extractRecipeWithLlm(htmlToVisibleText(html), deps.llmClientFactory());
+      if (body.type === "text") {
+        sourceType = "text";
+        draft = await extractRecipeWithLlm(body.text, deps.llmClientFactory());
+      } else if (body.type === "url") {
+        const videoId = extractYoutubeVideoId(body.url);
+        sourceType = videoId ? "youtube" : "web";
+
+        if (videoId) {
+          const transcript = await deps.fetchYoutubeTranscript(videoId);
+          draft = await extractRecipeWithLlm(transcript, deps.llmClientFactory());
+        } else {
+          const pageResponse = await fetch(body.url);
+          if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);
+          const html = await pageResponse.text();
+          const jsonLd = findRecipeJsonLd(html);
+          draft = jsonLd ? jsonLdToDraft(jsonLd) : null;
+          if (!draft) {
+            draft = await extractRecipeWithLlm(htmlToVisibleText(html), deps.llmClientFactory());
+          }
         }
+      } else {
+        throw new Error(`Unsupported import type: ${(body as { type: string }).type}`);
       }
 
       return c.json({ draft, sourceType });
