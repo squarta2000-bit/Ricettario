@@ -4,12 +4,14 @@ import { htmlToVisibleText } from "../extraction/htmlToText.ts";
 import { extractRecipeWithLlm, type MessagesClient } from "../extraction/llmExtract.ts";
 import { extractRecipeFromImages, type ImageInput } from "../extraction/llmExtractImages.ts";
 import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
+import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
 
 export interface ImportAppDeps {
   getUserId: (authHeader: string | undefined) => Promise<string | null>;
   fetchYoutubeTranscript: (videoId: string) => Promise<string>;
+  fetchYoutubeVideoInfo: (videoId: string) => Promise<YoutubeVideoInfo>;
   llmClientFactory: () => MessagesClient;
   countRecentImports: (userId: string) => Promise<number>;
   recordImportAttempt: (userId: string) => Promise<void>;
@@ -61,8 +63,18 @@ export function buildImportApp(deps: ImportAppDeps) {
         sourceType = videoId ? "youtube" : "web";
 
         if (videoId) {
-          const transcript = await deps.fetchYoutubeTranscript(videoId);
-          draft = await extractRecipeWithLlm(transcript, deps.llmClientFactory());
+          let sourceText: string;
+          try {
+            sourceText = await deps.fetchYoutubeTranscript(videoId);
+          } catch {
+            // YouTube's caption endpoints are frequently blocked/rate-limited
+            // for unauthenticated requests - fall back to the video's
+            // title+description, which many recipe channels fill in with the
+            // full written recipe anyway.
+            const info = await deps.fetchYoutubeVideoInfo(videoId);
+            sourceText = `${info.title}\n\n${info.description}`;
+          }
+          draft = await extractRecipeWithLlm(sourceText, deps.llmClientFactory());
         } else {
           const pageResponse = await fetch(url);
           if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);

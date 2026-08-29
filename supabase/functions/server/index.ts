@@ -5,6 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildImportApp } from "./routes/import.ts";
 import { buildLoginApp } from "./routes/login.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
+import { fetchYoutubeVideoInfo } from "./extraction/youtubeDescription.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
 import { mintSessionForEmail } from "./auth/mintSession.ts";
 import { countRecentImports, recordImportAttempt } from "./rateLimit.ts";
@@ -30,6 +31,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY")!;
+const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY")!;
 
 app.route(
   "/",
@@ -42,6 +44,7 @@ app.route(
       return data.user.id;
     },
     fetchYoutubeTranscript: (videoId) => fetchYoutubeTranscript(videoId, fetch),
+    fetchYoutubeVideoInfo: (videoId) => fetchYoutubeVideoInfo(videoId, youtubeApiKey, fetch),
     llmClientFactory: () => createAnthropicMessagesClient(anthropicApiKey),
     countRecentImports: (userId) => countRecentImports(supabaseUrl, serviceRoleKey, userId),
     recordImportAttempt: (userId) => recordImportAttempt(supabaseUrl, serviceRoleKey, userId),
