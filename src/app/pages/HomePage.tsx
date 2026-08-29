@@ -22,7 +22,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-normal">Ricettario</h1>
+          <h1 className="text-3xl font-serif">Ricettario</h1>
           <div className="flex gap-2">
             <Button asChild>
               <Link to="/import">Import recipe</Link>
@@ -46,8 +46,8 @@ export default function HomePage() {
           {recipes.map((recipe) => (
             <Link key={recipe.id} to={`/recipe/${recipe.id}`}>
               <Card className="p-4 h-full hover:bg-accent transition-colors">
-                <h2 className="font-medium mb-1">{recipe.title}</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="font-serif text-lg mb-1">{recipe.title}</h2>
+                <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
                   {recipe.totalMinutes != null ? `${recipe.totalMinutes} min` : 'Time unknown'}
                   {recipe.complexity ? ` · ${recipe.complexity}` : ''}
                 </p>

@@ -79,7 +79,7 @@ export default function CookingModePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-xl w-full px-4 text-center">
-          <h1 className="text-2xl font-normal mb-4">This recipe has no steps yet</h1>
+          <h1 className="font-serif text-3xl mb-4">This recipe has no steps yet</h1>
           <Button asChild>
             <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
           </Button>
@@ -97,7 +97,7 @@ export default function CookingModePage() {
       <div className="max-w-xl w-full px-4 text-center">
         {timer.isDone ? (
           <>
-            <h1 className="text-2xl font-normal mb-4">Done cooking!</h1>
+            <h1 className="font-serif text-3xl mb-4">Done cooking!</h1>
             <Button asChild>
               <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
             </Button>
@@ -109,7 +109,7 @@ export default function CookingModePage() {
                 justAdvanced ? 'bg-accent ring-2 ring-primary' : ''
               }`}
             >
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground mb-2">
                 Step {timer.currentStepIndex + 1} of {recipe.steps.length}
               </p>
               <p className="text-xl mb-4">{step.instruction}</p>

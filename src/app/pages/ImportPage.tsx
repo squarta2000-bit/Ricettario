@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { saveRecipe } from '../lib/recipesApi'
 import type { RecipeDraft } from '../lib/types'
@@ -144,7 +145,7 @@ export default function ImportPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md space-y-4 px-4">
-          <h1 className="text-2xl font-normal text-center">Import a recipe</h1>
+          <h1 className="font-serif text-3xl text-center">Import a recipe</h1>
           <Tabs value={mode} onValueChange={(value) => setMode(value as ImportMode)}>
             <TabsList className="w-full">
               <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
@@ -182,9 +183,9 @@ export default function ImportPage() {
                       type="button"
                       aria-label={`Remove photo ${index + 1}`}
                       onClick={() => handleRemovePhoto(index)}
-                      className="absolute -top-2 -right-2 flex items-center justify-center size-5 rounded-full bg-destructive text-white text-xs"
+                      className="absolute -top-2 -right-2 flex items-center justify-center size-5 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
                     >
-                      ×
+                      <X className="size-3" />
                     </button>
                   </div>
                 ))}
@@ -228,7 +229,7 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-        <h1 className="text-2xl font-normal">Review before saving</h1>
+        <h1 className="font-serif text-3xl">Review before saving</h1>
         {status === 'error' && <p className="text-destructive text-sm">{errorMessage}</p>}
 
         <label className="block text-sm font-medium">Title</label>

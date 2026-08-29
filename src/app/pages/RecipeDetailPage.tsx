@@ -32,14 +32,25 @@ export default function RecipeDetailPage() {
 
   if (!recipe) return null
 
+  const totalMinutes = recipe.steps.some((s) => s.estimatedMinutes != null)
+    ? recipe.steps.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
+    : null
+  const metadataParts = [
+    recipe.servings ? `Serves ${recipe.servings}` : null,
+    totalMinutes != null ? `${totalMinutes} min` : null,
+    recipe.complexity,
+  ].filter((part): part is string => Boolean(part))
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-normal">{recipe.title}</h1>
-            {recipe.complexity && (
-              <p className="text-sm text-muted-foreground">{recipe.complexity}</p>
+            <h1 className="font-serif text-4xl mb-2">{recipe.title}</h1>
+            {metadataParts.length > 0 && (
+              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                {metadataParts.join(' · ')}
+              </p>
             )}
           </div>
           {recipe.sourceUrl && (
@@ -53,12 +64,13 @@ export default function RecipeDetailPage() {
             </a>
           )}
         </div>
+        <div className="border-b border-border mb-6" />
 
         <Button asChild className="mb-8">
           <Link to={`/recipe/${recipe.id}/cook`}>Start cooking</Link>
         </Button>
 
-        <h2 className="font-medium mb-2">Ingredients</h2>
+        <h2 className="font-serif text-lg mb-2">Ingredients</h2>
         <ul className="mb-8 space-y-1">
           {recipe.ingredients.map((ing) => (
             <li key={ing.id} className="text-sm">
@@ -68,7 +80,7 @@ export default function RecipeDetailPage() {
           ))}
         </ul>
 
-        <h2 className="font-medium mb-2">Steps</h2>
+        <h2 className="font-serif text-lg mb-2">Steps</h2>
         <ol className="space-y-3 list-decimal list-inside">
           {recipe.steps.map((step) => (
             <li key={step.id} className="text-sm">

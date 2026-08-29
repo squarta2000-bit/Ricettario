@@ -10,14 +10,17 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setStatus('sending')
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    })
     setStatus(error ? 'error' : 'sent')
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-4">
-        <h1 className="text-2xl font-normal text-center">Ricettario</h1>
+        <h1 className="font-serif text-3xl text-center">Ricettario</h1>
         {status === 'sent' ? (
           <p className="text-center text-muted-foreground">
             Check your email for a sign-in link.
