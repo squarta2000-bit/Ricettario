@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react'
 import { getRecipe } from '../lib/recipesApi'
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
+import { BackLink } from '../components/BackLink'
 
 export default function RecipeDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,6 +45,7 @@ export default function RecipeDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-8">
+        <BackLink to="/">Recipes</BackLink>
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="font-serif text-4xl mb-2">{recipe.title}</h1>

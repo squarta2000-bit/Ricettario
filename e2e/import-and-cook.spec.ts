@@ -20,13 +20,9 @@ test('review-and-save a manually entered recipe, then cook it', async ({ page })
     await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible()
     await page.screenshot({ path: 'e2e/screenshots/import-review.png' })
 
-    // The "Title" <label> isn't programmatically associated with its <input>
-    // (no htmlFor/id in ImportPage.tsx), so getByLabel can't resolve it. It's
-    // the only <input> on this screen - ingredients/steps use <textarea> - so
-    // target it positionally instead.
-    await page.locator('input').first().fill('Three-Second Soup')
-    await page.locator('textarea').nth(0).fill('1 can tomatoes')
-    await page.locator('textarea').nth(1).fill('Stir.\nServe.')
+    await page.getByLabel('Title').fill('Three-Second Soup')
+    await page.getByLabel('Ingredients (one per line)').fill('1 can tomatoes')
+    await page.getByLabel('Steps (one per line)').fill('Stir.\nServe.')
     await page.getByRole('button', { name: 'Save recipe' }).click()
 
     await expect(page).toHaveURL(/\/recipe\/[\w-]+$/)

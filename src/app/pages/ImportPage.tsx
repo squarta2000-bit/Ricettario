@@ -9,6 +9,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { BackLink } from '../components/BackLink'
 
 type ImportMode = 'url' | 'photos' | 'text'
 type SourceType = 'web' | 'youtube' | 'photo' | 'text'
@@ -145,6 +146,7 @@ export default function ImportPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md space-y-4 px-4">
+          <BackLink to="/">Recipes</BackLink>
           <h1 className="font-serif text-3xl text-center">Import a recipe</h1>
           <Tabs value={mode} onValueChange={(value) => setMode(value as ImportMode)}>
             <TabsList className="w-full">
@@ -229,14 +231,20 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+        <BackLink to="/">Recipes</BackLink>
         <h1 className="font-serif text-3xl">Review before saving</h1>
         {status === 'error' && <p className="text-destructive text-sm">{errorMessage}</p>}
 
-        <label className="block text-sm font-medium">Title</label>
-        <Input value={draft?.title ?? ''} onChange={(e) => setDraft((d) => d && { ...d, title: e.target.value })} />
+        <label htmlFor="draft-title" className="block text-sm font-medium">Title</label>
+        <Input
+          id="draft-title"
+          value={draft?.title ?? ''}
+          onChange={(e) => setDraft((d) => d && { ...d, title: e.target.value })}
+        />
 
-        <label className="block text-sm font-medium">Ingredients (one per line)</label>
+        <label htmlFor="draft-ingredients" className="block text-sm font-medium">Ingredients (one per line)</label>
         <Textarea
+          id="draft-ingredients"
           rows={8}
           value={(draft?.ingredients ?? []).map((i) => i.rawText).join('\n')}
           onChange={(e) =>
@@ -253,8 +261,9 @@ export default function ImportPage() {
           }
         />
 
-        <label className="block text-sm font-medium">Steps (one per line)</label>
+        <label htmlFor="draft-steps" className="block text-sm font-medium">Steps (one per line)</label>
         <Textarea
+          id="draft-steps"
           rows={10}
           value={(draft?.steps ?? []).map((s) => s.instruction).join('\n')}
           onChange={(e) =>

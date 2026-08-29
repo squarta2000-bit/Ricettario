@@ -14,6 +14,7 @@ import {
 } from '../lib/timerEngine'
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
+import { BackLink } from '../components/BackLink'
 
 export default function CookingModePage() {
   const { id } = useParams<{ id: string }>()
@@ -95,6 +96,9 @@ export default function CookingModePage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-xl w-full px-4 text-center">
+        <div className="text-left">
+          <BackLink to={`/recipe/${recipe.id}`}>Recipe</BackLink>
+        </div>
         {timer.isDone ? (
           <>
             <h1 className="font-serif text-3xl mb-4">Done cooking!</h1>

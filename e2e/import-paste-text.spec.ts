@@ -16,9 +16,9 @@ test('paste recipe text, review, and save it without a source link', async ({ pa
     await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible()
     await page.screenshot({ path: 'screenshot/import-paste-text-review.png' })
 
-    await page.locator('input').first().fill('Pasted Soup')
-    await page.locator('textarea').nth(0).fill('1 can tomatoes')
-    await page.locator('textarea').nth(1).fill('Stir.\nServe.')
+    await page.getByLabel('Title').fill('Pasted Soup')
+    await page.getByLabel('Ingredients (one per line)').fill('1 can tomatoes')
+    await page.getByLabel('Steps (one per line)').fill('Stir.\nServe.')
     await page.getByRole('button', { name: 'Save recipe' }).click()
 
     await expect(page).toHaveURL(/\/recipe\/[\w-]+$/)
