@@ -185,3 +185,56 @@ Deno.test("returns 502 with a descriptive message for an unrecognized import typ
   assertEquals(response.status, 502);
   assertEquals(body.error, "Unsupported import type: bogus");
 });
+
+Deno.test("extracts a recipe from photos via the LLM vision call", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () =>
+      fakeLlmClient({ title: "Photo Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "images", images: [{ mediaType: "image/jpeg", data: "aaa" }] }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.sourceType, "photo");
+  assertEquals(body.draft.title, "Photo Soup");
+});
+
+Deno.test("rejects an images request with no photos", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "images", images: [] }),
+  });
+  assertEquals(response.status, 400);
+});
+
+Deno.test("rejects an images request with more than 5 photos", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const sixImages = Array.from({ length: 6 }, () => ({ mediaType: "image/jpeg", data: "aaa" }));
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "images", images: sixImages }),
+  });
+  assertEquals(response.status, 400);
+});

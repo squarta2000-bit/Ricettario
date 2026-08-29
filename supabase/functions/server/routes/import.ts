@@ -2,6 +2,7 @@ import { Hono } from "npm:hono";
 import { findRecipeJsonLd, jsonLdToDraft } from "../extraction/jsonld.ts";
 import { htmlToVisibleText } from "../extraction/htmlToText.ts";
 import { extractRecipeWithLlm, type MessagesClient } from "../extraction/llmExtract.ts";
+import { extractRecipeFromImages, type ImageInput } from "../extraction/llmExtractImages.ts";
 import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
@@ -14,7 +15,12 @@ export interface ImportAppDeps {
   recordImportAttempt: (userId: string) => Promise<void>;
 }
 
-type ImportRequestBody = { type: "url"; url: string } | { type: "text"; text: string };
+const MAX_IMAGES = 5;
+
+type ImportRequestBody =
+  | { type: "url"; url: string }
+  | { type: "text"; text: string }
+  | { type: "images"; images: ImageInput[] };
 
 export function buildImportApp(deps: ImportAppDeps) {
   const app = new Hono();
@@ -36,11 +42,17 @@ export function buildImportApp(deps: ImportAppDeps) {
       const body = await c.req.json<ImportRequestBody>();
 
       let draft: RecipeDraft | null;
-      let sourceType: "web" | "youtube" | "text";
+      let sourceType: "web" | "youtube" | "text" | "photo";
 
       if (body.type === "text") {
         sourceType = "text";
         draft = await extractRecipeWithLlm(body.text, deps.llmClientFactory());
+      } else if (body.type === "images") {
+        if (body.images.length === 0 || body.images.length > MAX_IMAGES) {
+          return c.json({ error: `Provide between 1 and ${MAX_IMAGES} photos` }, 400);
+        }
+        sourceType = "photo";
+        draft = await extractRecipeFromImages(body.images, deps.llmClientFactory());
       } else if (body.type === "url") {
         const videoId = extractYoutubeVideoId(body.url);
         sourceType = videoId ? "youtube" : "web";
