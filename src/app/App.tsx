@@ -48,6 +48,14 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/recipe/:id/edit"
+              element={
+                <RequireAuth>
+                  <ImportPage />
+                </RequireAuth>
+              }
+            />
           </Routes>
         </BrowserRouter>
         <Toaster />

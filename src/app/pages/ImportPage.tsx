@@ -1,8 +1,8 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import { saveRecipe } from '../lib/recipesApi'
+import { saveRecipe, updateRecipe, getRecipe } from '../lib/recipesApi'
 import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeDraft } from '../lib/types'
 import { compressImageFile, type CompressedImage } from '../lib/imageResize'
@@ -31,6 +31,7 @@ interface StagedPhoto {
 export default function ImportPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { id: editId } = useParams<{ id: string }>()
   const [mode, setMode] = useState<ImportMode>('url')
   const [url, setUrl] = useState('')
   const [pastedText, setPastedText] = useState('')
@@ -38,10 +39,41 @@ export default function ImportPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [draft, setDraft] = useState<RecipeDraft | null>(null)
   const [sourceType, setSourceType] = useState<SourceType>('web')
+  const [editSourceUrl, setEditSourceUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<StagedPhoto[]>([])
   const [isCompressing, setIsCompressing] = useState(false)
   const [photosError, setPhotosError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!editId) return
+    getRecipe(editId)
+      .then((recipe) => {
+        setDraft({
+          title: recipe.title,
+          complexity: recipe.complexity,
+          servings: recipe.servings,
+          imageUrl: recipe.imageUrl,
+          prepMinutes: recipe.prepMinutes,
+          cookMinutes: recipe.cookMinutes,
+          ingredients: recipe.ingredients.map((i) => ({
+            rawText: i.rawText,
+            quantity: i.quantity,
+            unit: i.unit,
+            name: i.name,
+          })),
+          steps: recipe.steps.map((s) => ({ instruction: s.instruction, estimatedMinutes: s.estimatedMinutes })),
+        })
+        setEditSourceUrl(recipe.sourceUrl)
+        setSourceType(recipe.sourceType)
+        setStatus('reviewing')
+      })
+      .catch(() => {
+        setErrorMessage(t('import.editLoadError'))
+        setStatus('error')
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId])
 
   function handleAddPhotoClick() {
     fileInputRef.current?.click()
@@ -137,6 +169,22 @@ export default function ImportPage() {
     if (!draft) return
     setStatus('saving')
     try {
+      if (editId) {
+        await updateRecipe(editId, {
+          title: draft.title,
+          sourceUrl: editSourceUrl,
+          sourceType,
+          imageUrl: draft.imageUrl,
+          complexity: draft.complexity,
+          servings: draft.servings,
+          prepMinutes: draft.prepMinutes,
+          cookMinutes: draft.cookMinutes,
+          ingredients: draft.ingredients,
+          steps: draft.steps,
+        })
+        navigate(`/recipe/${editId}`)
+        return
+      }
       const id = await saveRecipe({
         title: draft.title,
         sourceUrl: mode === 'url' ? url : null,
@@ -154,6 +202,12 @@ export default function ImportPage() {
       setErrorMessage(err instanceof Error ? err.message : t('import.genericSaveError'))
       setStatus('error')
     }
+  }
+
+  if (editId && status === 'idle') {
+    // Avoid a flash of the import-method screen while the existing
+    // recipe is still loading for editing.
+    return null
   }
 
   if (status === 'idle' || status === 'importing') {
@@ -253,10 +307,10 @@ export default function ImportPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
         <div className="flex items-center justify-between">
-          <BackLink to="/">{t('import.backLink')}</BackLink>
+          <BackLink to={editId ? `/recipe/${editId}` : '/'}>{editId ? t('cooking.backLink') : t('import.backLink')}</BackLink>
           <LanguageSelector />
         </div>
-        <h1 className="font-serif text-3xl">{t('import.reviewHeading')}</h1>
+        <h1 className="font-serif text-3xl">{editId ? t('import.editHeading') : t('import.reviewHeading')}</h1>
         {status === 'error' && <p className="text-destructive text-sm">{errorMessage}</p>}
 
         <label htmlFor="draft-title" className="block text-sm font-medium">{t('import.titleLabel')}</label>
@@ -308,7 +362,7 @@ export default function ImportPage() {
         />
 
         <Button onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? t('import.saving') : t('import.saveRecipe')}
+          {status === 'saving' ? t('import.saving') : editId ? t('import.saveChanges') : t('import.saveRecipe')}
         </Button>
       </div>
     </div>

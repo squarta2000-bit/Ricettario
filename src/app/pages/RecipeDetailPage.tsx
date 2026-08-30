@@ -48,7 +48,7 @@ export default function RecipeDetailPage() {
       { prepMinutes: recipe.prepMinutes, cookMinutes: recipe.cookMinutes, totalMinutes },
       { prep: t('duration.prep'), cook: t('duration.cook') },
     ),
-    recipe.complexity,
+    recipe.complexity ? `${t('duration.difficulty')} ${recipe.complexity}` : null,
   ].filter((part): part is string => Boolean(part))
 
   return (

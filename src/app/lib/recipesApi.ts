@@ -78,6 +78,24 @@ export interface SaveRecipeInput {
   steps: { instruction: string; estimatedMinutes: number | null }[]
 }
 
+function buildIngredientAndStepRows(recipeId: string, input: SaveRecipeInput) {
+  const ingredientRows = input.ingredients.map((ing, index) => ({
+    recipe_id: recipeId,
+    position: index,
+    raw_text: ing.rawText,
+    quantity: ing.quantity,
+    unit: ing.unit,
+    name: ing.name,
+  }))
+  const stepRows = input.steps.map((step, index) => ({
+    recipe_id: recipeId,
+    position: index,
+    instruction: step.instruction,
+    estimated_minutes: step.estimatedMinutes,
+  }))
+  return { ingredientRows, stepRows }
+}
+
 export async function saveRecipe(input: SaveRecipeInput): Promise<string> {
   const { data: userData, error: userError } = await supabase.auth.getUser()
   if (userError || !userData.user) throw new Error('Not signed in')
@@ -99,21 +117,7 @@ export async function saveRecipe(input: SaveRecipeInput): Promise<string> {
     .single()
   if (recipeError) throw new Error(recipeError.message)
 
-  const ingredientRows = input.ingredients.map((ing, index) => ({
-    recipe_id: recipe.id,
-    position: index,
-    raw_text: ing.rawText,
-    quantity: ing.quantity,
-    unit: ing.unit,
-    name: ing.name,
-  }))
-  const stepRows = input.steps.map((step, index) => ({
-    recipe_id: recipe.id,
-    position: index,
-    instruction: step.instruction,
-    estimated_minutes: step.estimatedMinutes,
-  }))
-
+  const { ingredientRows, stepRows } = buildIngredientAndStepRows(recipe.id, input)
   const [ingredientsResult, stepsResult] = await Promise.all([
     supabase.from('ingredients').insert(ingredientRows),
     supabase.from('steps').insert(stepRows),
@@ -122,4 +126,45 @@ export async function saveRecipe(input: SaveRecipeInput): Promise<string> {
   if (stepsResult.error) throw new Error(stepsResult.error.message)
 
   return recipe.id as string
+}
+
+export async function updateRecipe(id: string, input: SaveRecipeInput): Promise<void> {
+  const { error: recipeError } = await supabase
+    .from('recipes')
+    .update({
+      title: input.title,
+      source_url: input.sourceUrl,
+      source_type: input.sourceType,
+      image_url: input.imageUrl,
+      complexity: input.complexity,
+      servings: input.servings,
+      prep_minutes: input.prepMinutes,
+      cook_minutes: input.cookMinutes,
+    })
+    .eq('id', id)
+  if (recipeError) throw new Error(recipeError.message)
+
+  // Ingredients/steps have no stable identity from the edit form (just
+  // reordered lines of text), so the simplest correct approach is to
+  // replace the full set rather than trying to diff it against what's
+  // already stored.
+  const [deletedIngredients, deletedSteps] = await Promise.all([
+    supabase.from('ingredients').delete().eq('recipe_id', id),
+    supabase.from('steps').delete().eq('recipe_id', id),
+  ])
+  if (deletedIngredients.error) throw new Error(deletedIngredients.error.message)
+  if (deletedSteps.error) throw new Error(deletedSteps.error.message)
+
+  const { ingredientRows, stepRows } = buildIngredientAndStepRows(id, input)
+  const [ingredientsResult, stepsResult] = await Promise.all([
+    supabase.from('ingredients').insert(ingredientRows),
+    supabase.from('steps').insert(stepRows),
+  ])
+  if (ingredientsResult.error) throw new Error(ingredientsResult.error.message)
+  if (stepsResult.error) throw new Error(stepsResult.error.message)
+}
+
+export async function deleteRecipe(id: string): Promise<void> {
+  const { error } = await supabase.from('recipes').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
