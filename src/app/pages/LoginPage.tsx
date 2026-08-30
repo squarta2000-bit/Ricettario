@@ -1,14 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useTranslation } from '../lib/i18n/LanguageContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { LanguageSelector } from '../components/LanguageSelector'
 
 type AuthMode = 'login' | 'signup'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [mode, setMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle')
@@ -25,7 +28,7 @@ export default function LoginPage() {
     setStatus('submitting')
     const { data, error } = await supabase.functions.invoke('server/login', { body: { email } })
     if (error || !data?.accessToken || !data?.refreshToken) {
-      let message = 'No account found for that email. Sign up first.'
+      let message = t('login.noAccountError')
       if (error) {
         try {
           const errorBody = await error.context.json()
@@ -69,11 +72,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-4 px-4">
+        <div className="flex justify-end">
+          <LanguageSelector />
+        </div>
         <h1 className="font-serif text-3xl text-center">Ricettario</h1>
         <Tabs value={mode} onValueChange={handleModeChange}>
           <TabsList className="w-full">
-            <TabsTrigger value="login" className="flex-1">Log In</TabsTrigger>
-            <TabsTrigger value="signup" className="flex-1">Sign Up</TabsTrigger>
+            <TabsTrigger value="login" className="flex-1">{t('login.tabLogin')}</TabsTrigger>
+            <TabsTrigger value="signup" className="flex-1">{t('login.tabSignup')}</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="space-y-4">
@@ -85,7 +91,7 @@ export default function LoginPage() {
                 required
               />
               <Button type="submit" className="w-full" disabled={status === 'submitting'}>
-                {status === 'submitting' ? 'Logging in…' : 'Log in'}
+                {status === 'submitting' ? t('login.loggingIn') : t('login.logIn')}
               </Button>
               {mode === 'login' && status === 'error' && (
                 <p className="text-center text-destructive text-sm">{errorMessage}</p>
@@ -94,9 +100,7 @@ export default function LoginPage() {
           </TabsContent>
           <TabsContent value="signup">
             {mode === 'signup' && status === 'sent' ? (
-              <p className="text-center text-muted-foreground">
-                Check your email to confirm your address.
-              </p>
+              <p className="text-center text-muted-foreground">{t('login.checkEmail')}</p>
             ) : (
               <form onSubmit={handleSignup} className="space-y-4">
                 <Input
@@ -107,7 +111,7 @@ export default function LoginPage() {
                   required
                 />
                 <Button type="submit" className="w-full" disabled={status === 'submitting'}>
-                  {status === 'submitting' ? 'Sending…' : 'Sign up'}
+                  {status === 'submitting' ? t('login.sending') : t('login.signUp')}
                 </Button>
                 {mode === 'signup' && status === 'error' && (
                   <p className="text-center text-destructive text-sm">{errorMessage}</p>

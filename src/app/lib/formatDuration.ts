@@ -11,14 +11,17 @@ export function formatDuration(minutes: number): string {
 // combined total when neither half is known. Returns null when there's no
 // duration information at all, leaving it to the caller to decide whether
 // to show a placeholder or omit the field entirely.
-export function formatRecipeDuration(input: {
-  prepMinutes: number | null
-  cookMinutes: number | null
-  totalMinutes: number | null
-}): string | null {
+export function formatRecipeDuration(
+  input: {
+    prepMinutes: number | null
+    cookMinutes: number | null
+    totalMinutes: number | null
+  },
+  labels: { prep: string; cook: string } = { prep: 'Prep', cook: 'Cook' },
+): string | null {
   const parts: string[] = []
-  if (input.prepMinutes != null) parts.push(`Prep ${formatDuration(input.prepMinutes)}`)
-  if (input.cookMinutes != null) parts.push(`Cook ${formatDuration(input.cookMinutes)}`)
+  if (input.prepMinutes != null) parts.push(`${labels.prep} ${formatDuration(input.prepMinutes)}`)
+  if (input.cookMinutes != null) parts.push(`${labels.cook} ${formatDuration(input.cookMinutes)}`)
   if (parts.length > 0) return parts.join(' · ')
   if (input.totalMinutes != null) return formatDuration(input.totalMinutes)
   return null

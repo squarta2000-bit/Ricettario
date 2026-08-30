@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getRecipe } from '../lib/recipesApi'
 import { playStepAlertSound } from '../lib/alertSound'
+import { useTranslation } from '../lib/i18n/LanguageContext'
 import {
   startTimer,
   advanceStep,
@@ -15,9 +16,11 @@ import {
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { BackLink } from '../components/BackLink'
+import { LanguageSelector } from '../components/LanguageSelector'
 
 export default function CookingModePage() {
   const { id } = useParams<{ id: string }>()
+  const { t } = useTranslation()
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +35,8 @@ export default function CookingModePage() {
           setRecipe(r)
           setTimer(startTimer(Date.now()))
         })
-        .catch(() => setError('Something went wrong loading this recipe.'))
+        .catch(() => setError(t('cooking.loadError')))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   useEffect(() => {
@@ -67,7 +71,7 @@ export default function CookingModePage() {
         <div className="max-w-xl w-full px-4 text-center">
           <p className="text-destructive text-sm mb-4">{error}</p>
           <Button asChild variant="outline">
-            <Link to="/">Back to recipes</Link>
+            <Link to="/">{t('cooking.backToRecipes')}</Link>
           </Button>
         </div>
       </div>
@@ -80,9 +84,9 @@ export default function CookingModePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-xl w-full px-4 text-center">
-          <h1 className="font-serif text-3xl mb-4">This recipe has no steps yet</h1>
+          <h1 className="font-serif text-3xl mb-4">{t('cooking.noStepsHeading')}</h1>
           <Button asChild>
-            <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
+            <Link to={`/recipe/${recipe.id}`}>{t('cooking.backToRecipe')}</Link>
           </Button>
         </div>
       </div>
@@ -96,14 +100,15 @@ export default function CookingModePage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-xl w-full px-4 text-center">
-        <div className="text-left">
-          <BackLink to={`/recipe/${recipe.id}`}>Recipe</BackLink>
+        <div className="flex items-center justify-between text-left">
+          <BackLink to={`/recipe/${recipe.id}`}>{t('cooking.backLink')}</BackLink>
+          <LanguageSelector />
         </div>
         {timer.isDone ? (
           <>
-            <h1 className="font-serif text-3xl mb-4">Done cooking!</h1>
+            <h1 className="font-serif text-3xl mb-4">{t('cooking.doneHeading')}</h1>
             <Button asChild>
-              <Link to={`/recipe/${recipe.id}`}>Back to recipe</Link>
+              <Link to={`/recipe/${recipe.id}`}>{t('cooking.backToRecipe')}</Link>
             </Button>
           </>
         ) : (
@@ -114,7 +119,7 @@ export default function CookingModePage() {
               }`}
             >
               <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground mb-2">
-                Step {timer.currentStepIndex + 1} of {recipe.steps.length}
+                {t('cooking.stepOf', { current: timer.currentStepIndex + 1, total: recipe.steps.length })}
               </p>
               <p className="text-xl mb-4">{step.instruction}</p>
               {remainingSeconds != null && (
@@ -129,16 +134,16 @@ export default function CookingModePage() {
                 onClick={() => setTimer(goToStep(timer, timer.currentStepIndex - 1, recipe.steps, Date.now()))}
                 disabled={timer.currentStepIndex === 0}
               >
-                Back
+                {t('cooking.back')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setTimer(timer.isPaused ? resumeTimer(timer, Date.now()) : pauseTimer(timer, Date.now()))}
               >
-                {timer.isPaused ? 'Resume' : 'Pause'}
+                {timer.isPaused ? t('cooking.resume') : t('cooking.pause')}
               </Button>
               <Button onClick={() => setTimer(advanceStep(timer, recipe.steps, Date.now()))}>
-                Next step
+                {t('cooking.nextStep')}
               </Button>
             </div>
           </>

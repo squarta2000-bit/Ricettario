@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { saveRecipe } from '../lib/recipesApi'
+import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeDraft } from '../lib/types'
 import { compressImageFile, type CompressedImage } from '../lib/imageResize'
 import { Button } from '../components/ui/button'
@@ -10,6 +11,7 @@ import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { BackLink } from '../components/BackLink'
+import { LanguageSelector } from '../components/LanguageSelector'
 
 type ImportMode = 'url' | 'photos' | 'text'
 type SourceType = 'web' | 'youtube' | 'photo' | 'text'
@@ -28,6 +30,7 @@ interface StagedPhoto {
 
 export default function ImportPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [mode, setMode] = useState<ImportMode>('url')
   const [url, setUrl] = useState('')
   const [pastedText, setPastedText] = useState('')
@@ -66,7 +69,7 @@ export default function ImportPage() {
       setPhotos((current) => [...current, ...newPhotos])
     } catch (err) {
       createdPreviewUrls.forEach((url) => URL.revokeObjectURL(url))
-      setPhotosError(err instanceof Error ? err.message : 'Failed to process one of the selected photos.')
+      setPhotosError(err instanceof Error ? err.message : t('import.photoProcessingError'))
     } finally {
       setIsCompressing(false)
     }
@@ -92,7 +95,7 @@ export default function ImportPage() {
       headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
     })
     if (error || !data?.draft) {
-      let message = 'Import failed. You can still fill this in manually.'
+      let message = t('import.genericImportError')
       if (error) {
         try {
           const errorBody = await error.context.json()
@@ -148,7 +151,7 @@ export default function ImportPage() {
       })
       navigate(`/recipe/${id}`)
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Save failed. Please try again.')
+      setErrorMessage(err instanceof Error ? err.message : t('import.genericSaveError'))
       setStatus('error')
     }
   }
@@ -157,24 +160,27 @@ export default function ImportPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md space-y-4 px-4">
-          <BackLink to="/">Recipes</BackLink>
-          <h1 className="font-serif text-3xl text-center">Import a recipe</h1>
+          <div className="flex items-center justify-between">
+            <BackLink to="/">{t('import.backLink')}</BackLink>
+            <LanguageSelector />
+          </div>
+          <h1 className="font-serif text-3xl text-center">{t('import.heading')}</h1>
           <Tabs value={mode} onValueChange={(value) => setMode(value as ImportMode)}>
             <TabsList className="w-full">
-              <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
-              <TabsTrigger value="photos" className="flex-1">Take Photos</TabsTrigger>
-              <TabsTrigger value="text" className="flex-1">Paste Text</TabsTrigger>
+              <TabsTrigger value="url" className="flex-1">{t('import.tabUrl')}</TabsTrigger>
+              <TabsTrigger value="photos" className="flex-1">{t('import.tabPhotos')}</TabsTrigger>
+              <TabsTrigger value="text" className="flex-1">{t('import.tabText')}</TabsTrigger>
             </TabsList>
             <TabsContent value="url">
               <form onSubmit={handleUrlSubmit} className="space-y-4">
                 <Input
-                  placeholder="https://example.com/recipe or a YouTube URL"
+                  placeholder={t('import.urlPlaceholder')}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   required
                 />
                 <Button type="submit" className="w-full" disabled={status === 'importing'}>
-                  {status === 'importing' ? 'Importing…' : 'Import'}
+                  {status === 'importing' ? t('import.importing') : t('import.import')}
                 </Button>
               </form>
             </TabsContent>
@@ -191,10 +197,14 @@ export default function ImportPage() {
               <div className="flex flex-wrap gap-2">
                 {photos.map((photo, index) => (
                   <div key={photo.previewUrl} className="relative">
-                    <img src={photo.previewUrl} alt={`Recipe photo ${index + 1}`} className="size-20 object-cover rounded-md" />
+                    <img
+                      src={photo.previewUrl}
+                      alt={t('import.photoAlt', { n: index + 1 })}
+                      className="size-20 object-cover rounded-md"
+                    />
                     <button
                       type="button"
-                      aria-label={`Remove photo ${index + 1}`}
+                      aria-label={t('import.removePhoto', { n: index + 1 })}
                       onClick={() => handleRemovePhoto(index)}
                       className="absolute -top-2 -right-2 flex items-center justify-center size-5 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
                     >
@@ -211,25 +221,25 @@ export default function ImportPage() {
                 onClick={handleAddPhotoClick}
                 disabled={photos.length >= MAX_PHOTOS || isCompressing}
               >
-                {isCompressing ? 'Processing…' : 'Add photo'}
+                {isCompressing ? t('import.processing') : t('import.addPhoto')}
               </Button>
               <form onSubmit={handlePhotosSubmit}>
                 <Button type="submit" className="w-full" disabled={photos.length === 0 || status === 'importing'}>
-                  {status === 'importing' ? 'Extracting…' : 'Extract recipe from photos'}
+                  {status === 'importing' ? t('import.extracting') : t('import.extractFromPhotos')}
                 </Button>
               </form>
             </TabsContent>
             <TabsContent value="text">
               <form onSubmit={handleTextSubmit} className="space-y-4">
                 <Textarea
-                  placeholder="Paste the recipe text here"
+                  placeholder={t('import.textPlaceholder')}
                   rows={10}
                   value={pastedText}
                   onChange={(e) => setPastedText(e.target.value)}
                   required
                 />
                 <Button type="submit" className="w-full" disabled={status === 'importing'}>
-                  {status === 'importing' ? 'Extracting…' : 'Extract recipe from text'}
+                  {status === 'importing' ? t('import.extracting') : t('import.extractFromText')}
                 </Button>
               </form>
             </TabsContent>
@@ -242,18 +252,21 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-        <BackLink to="/">Recipes</BackLink>
-        <h1 className="font-serif text-3xl">Review before saving</h1>
+        <div className="flex items-center justify-between">
+          <BackLink to="/">{t('import.backLink')}</BackLink>
+          <LanguageSelector />
+        </div>
+        <h1 className="font-serif text-3xl">{t('import.reviewHeading')}</h1>
         {status === 'error' && <p className="text-destructive text-sm">{errorMessage}</p>}
 
-        <label htmlFor="draft-title" className="block text-sm font-medium">Title</label>
+        <label htmlFor="draft-title" className="block text-sm font-medium">{t('import.titleLabel')}</label>
         <Input
           id="draft-title"
           value={draft?.title ?? ''}
           onChange={(e) => setDraft((d) => d && { ...d, title: e.target.value })}
         />
 
-        <label htmlFor="draft-ingredients" className="block text-sm font-medium">Ingredients (one per line)</label>
+        <label htmlFor="draft-ingredients" className="block text-sm font-medium">{t('import.ingredientsLabel')}</label>
         <Textarea
           id="draft-ingredients"
           rows={8}
@@ -272,7 +285,7 @@ export default function ImportPage() {
           }
         />
 
-        <label htmlFor="draft-steps" className="block text-sm font-medium">Steps (one per line)</label>
+        <label htmlFor="draft-steps" className="block text-sm font-medium">{t('import.stepsLabel')}</label>
         <Textarea
           id="draft-steps"
           rows={10}
@@ -295,7 +308,7 @@ export default function ImportPage() {
         />
 
         <Button onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : 'Save recipe'}
+          {status === 'saving' ? t('import.saving') : t('import.saveRecipe')}
         </Button>
       </div>
     </div>

@@ -3,12 +3,16 @@ import { Link, useParams } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { getRecipe } from '../lib/recipesApi'
 import { formatRecipeDuration } from '../lib/formatDuration'
+import { formatNumber } from '../lib/europeanFormat'
+import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { BackLink } from '../components/BackLink'
+import { LanguageSelector } from '../components/LanguageSelector'
 
 export default function RecipeDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { t } = useTranslation()
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -16,7 +20,8 @@ export default function RecipeDetailPage() {
     if (id)
       getRecipe(id)
         .then(setRecipe)
-        .catch(() => setError('Something went wrong loading this recipe.'))
+        .catch(() => setError(t('recipeDetail.loadError')))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   if (error) {
@@ -25,7 +30,7 @@ export default function RecipeDetailPage() {
         <div className="max-w-xl w-full px-4 text-center">
           <p className="text-destructive text-sm mb-4">{error}</p>
           <Button asChild variant="outline">
-            <Link to="/">Back to recipes</Link>
+            <Link to="/">{t('recipeDetail.backToRecipes')}</Link>
           </Button>
         </div>
       </div>
@@ -38,15 +43,21 @@ export default function RecipeDetailPage() {
     ? recipe.steps.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
     : null
   const metadataParts = [
-    recipe.servings ? `Serves ${recipe.servings}` : null,
-    formatRecipeDuration({ prepMinutes: recipe.prepMinutes, cookMinutes: recipe.cookMinutes, totalMinutes }),
+    recipe.servings ? t('recipeDetail.serves', { count: recipe.servings }) : null,
+    formatRecipeDuration(
+      { prepMinutes: recipe.prepMinutes, cookMinutes: recipe.cookMinutes, totalMinutes },
+      { prep: t('duration.prep'), cook: t('duration.cook') },
+    ),
     recipe.complexity,
   ].filter((part): part is string => Boolean(part))
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <BackLink to="/">Recipes</BackLink>
+        <div className="flex items-center justify-between mb-4">
+          <BackLink to="/">{t('recipeDetail.backLink')}</BackLink>
+          <LanguageSelector />
+        </div>
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="font-serif text-4xl mb-2">{recipe.title}</h1>
@@ -63,33 +74,33 @@ export default function RecipeDetailPage() {
               rel="noreferrer"
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-              Source <ExternalLink className="size-4" />
+              {t('recipeDetail.source')} <ExternalLink className="size-4" />
             </a>
           )}
         </div>
         <div className="border-b border-border mb-6" />
 
         <Button asChild className="mb-8">
-          <Link to={`/recipe/${recipe.id}/cook`}>Start cooking</Link>
+          <Link to={`/recipe/${recipe.id}/cook`}>{t('recipeDetail.startCooking')}</Link>
         </Button>
 
-        <h2 className="font-serif text-lg mb-2">Ingredients</h2>
+        <h2 className="font-serif text-lg mb-2">{t('recipeDetail.ingredients')}</h2>
         <ul className="mb-8 space-y-1 list-disc list-inside">
           {recipe.ingredients.map((ing) => (
             <li key={ing.id} className="text-sm">
-              {ing.quantity != null ? `${ing.quantity} ${ing.unit ?? ''} ` : ''}
+              {ing.quantity != null ? `${formatNumber(ing.quantity)} ${ing.unit ?? ''} ` : ''}
               {ing.name}
             </li>
           ))}
         </ul>
 
-        <h2 className="font-serif text-lg mb-2">Steps</h2>
+        <h2 className="font-serif text-lg mb-2">{t('recipeDetail.steps')}</h2>
         <ol className="space-y-3 list-decimal list-inside">
           {recipe.steps.map((step) => (
             <li key={step.id} className="text-sm">
               {step.instruction}
               {step.estimatedMinutes != null && (
-                <span className="text-muted-foreground"> ({step.estimatedMinutes} min)</span>
+                <span className="text-muted-foreground"> ({formatNumber(step.estimatedMinutes)} min)</span>
               )}
             </li>
           ))}
