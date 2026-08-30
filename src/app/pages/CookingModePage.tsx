@@ -136,12 +136,14 @@ export default function CookingModePage() {
               >
                 {t('cooking.back')}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setTimer(timer.isPaused ? resumeTimer(timer, Date.now()) : pauseTimer(timer, Date.now()))}
-              >
-                {timer.isPaused ? t('cooking.resume') : t('cooking.pause')}
-              </Button>
+              {remainingSeconds != null && (
+                <Button
+                  variant="outline"
+                  onClick={() => setTimer(timer.isPaused ? resumeTimer(timer, Date.now()) : pauseTimer(timer, Date.now()))}
+                >
+                  {timer.isPaused ? t('cooking.resume') : t('cooking.pause')}
+                </Button>
+              )}
               <Button onClick={() => setTimer(advanceStep(timer, recipe.steps, Date.now()))}>
                 {t('cooking.nextStep')}
               </Button>
