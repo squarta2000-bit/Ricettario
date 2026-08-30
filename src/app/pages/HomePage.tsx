@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LayoutGrid, List as ListIcon } from 'lucide-react'
 import { listRecipes } from '../lib/recipesApi'
 import { supabase } from '../lib/supabaseClient'
 import { formatRecipeDuration } from '../lib/formatDuration'
@@ -7,10 +8,19 @@ import type { RecipeListItem } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 
+type ViewMode = 'card' | 'list'
+
+const VIEW_MODE_STORAGE_KEY = 'ricettario:home-view-mode'
+
+function loadStoredViewMode(): ViewMode {
+  return localStorage.getItem(VIEW_MODE_STORAGE_KEY) === 'list' ? 'list' : 'card'
+}
+
 export default function HomePage() {
   const [recipes, setRecipes] = useState<RecipeListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>(loadStoredViewMode)
 
   useEffect(() => {
     listRecipes()
@@ -19,12 +29,37 @@ export default function HomePage() {
       .finally(() => setIsLoading(false))
   }, [])
 
+  function selectViewMode(mode: ViewMode) {
+    setViewMode(mode)
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-serif">Ricettario</h1>
           <div className="flex gap-2">
+            <div className="flex gap-1" role="group" aria-label="View mode">
+              <Button
+                variant={viewMode === 'card' ? 'secondary' : 'outline'}
+                size="icon"
+                aria-label="Card view"
+                aria-pressed={viewMode === 'card'}
+                onClick={() => selectViewMode('card')}
+              >
+                <LayoutGrid />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'outline'}
+                size="icon"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+                onClick={() => selectViewMode('list')}
+              >
+                <ListIcon />
+              </Button>
+            </div>
             <Button asChild>
               <Link to="/import">Import recipe</Link>
             </Button>
@@ -43,19 +78,37 @@ export default function HomePage() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.map((recipe) => (
-            <Link key={recipe.id} to={`/recipe/${recipe.id}`}>
-              <Card className="p-4 h-full hover:bg-accent transition-colors">
-                <h2 className="font-serif text-lg mb-1">{recipe.title}</h2>
-                <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+        {viewMode === 'card' ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recipes.map((recipe) => (
+              <Link key={recipe.id} to={`/recipe/${recipe.id}`}>
+                <Card className="p-4 h-full hover:bg-accent transition-colors">
+                  <h2 className="font-serif text-lg mb-1">{recipe.title}</h2>
+                  <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                    {formatRecipeDuration(recipe) ?? 'Time unknown'}
+                    {recipe.complexity ? ` · ${recipe.complexity}` : ''}
+                  </p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="border-t border-border">
+            {recipes.map((recipe) => (
+              <Link
+                key={recipe.id}
+                to={`/recipe/${recipe.id}`}
+                className="flex items-center justify-between gap-4 py-3 border-b border-border hover:bg-accent/50 transition-colors -mx-2 px-2 rounded-md"
+              >
+                <h2 className="font-serif text-lg truncate">{recipe.title}</h2>
+                <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap">
                   {formatRecipeDuration(recipe) ?? 'Time unknown'}
                   {recipe.complexity ? ` · ${recipe.complexity}` : ''}
                 </p>
-              </Card>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

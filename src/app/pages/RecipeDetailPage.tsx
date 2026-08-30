@@ -74,7 +74,7 @@ export default function RecipeDetailPage() {
         </Button>
 
         <h2 className="font-serif text-lg mb-2">Ingredients</h2>
-        <ul className="mb-8 space-y-1">
+        <ul className="mb-8 space-y-1 list-disc list-inside">
           {recipe.ingredients.map((ing) => (
             <li key={ing.id} className="text-sm">
               {ing.quantity != null ? `${ing.quantity} ${ing.unit ?? ''} ` : ''}
