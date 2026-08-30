@@ -1,0 +1,13 @@
+- main [ref=f1e3]:
+  - paragraph [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - strong [ref=f1e6]: "404"
+      - text: ": NOT_FOUND"
+    - generic [ref=f1e7]:
+      - text: "Code:"
+      - code [ref=f1e8]: "`NOT_FOUND`"
+    - generic [ref=f1e9]:
+      - text: "ID:"
+      - code [ref=f1e10]: "`fra1::fkzng-1788045913805-d322d30efc65`"
+  - link "Read our documentation to learn more about this error." [ref=f1e11] [cursor=pointer]:
+    - /url: https://vercel.com/docs/errors/NOT_FOUND

@@ -6,6 +6,8 @@ interface SchemaOrgRecipe {
   recipeIngredient?: string[];
   recipeInstructions?: unknown;
   totalTime?: string;
+  prepTime?: string;
+  cookTime?: string;
   recipeYield?: string | string[];
   image?: string | { url?: string } | string[];
 }
@@ -65,13 +67,33 @@ export function findRecipeJsonLd(html: string): SchemaOrgRecipe | null {
   return null;
 }
 
+// Splits `totalMinutes` across `stepCount` steps so the parts sum back to
+// exactly `totalMinutes` - unlike naive per-step rounding, which drifts.
+function distributeMinutes(totalMinutes: number, stepCount: number): number[] {
+  const base = Math.floor(totalMinutes / stepCount);
+  const remainder = totalMinutes - base * stepCount;
+  return Array.from({ length: stepCount }, (_, i) => (i < remainder ? base + 1 : base));
+}
+
 export function jsonLdToDraft(recipe: SchemaOrgRecipe): RecipeDraft | null {
   const ingredients = recipe.recipeIngredient ?? [];
   const instructions = extractInstructionText(recipe.recipeInstructions);
   if (ingredients.length === 0 || instructions.length === 0) return null;
 
-  const totalMinutes = parseIsoDurationToMinutes(recipe.totalTime);
-  const perStepMinutes = totalMinutes ? Math.max(1, Math.round(totalMinutes / instructions.length)) : null;
+  const prepMinutes = parseIsoDurationToMinutes(recipe.prepTime);
+  let cookMinutes = parseIsoDurationToMinutes(recipe.cookTime);
+  if (cookMinutes == null) {
+    const totalMinutes = parseIsoDurationToMinutes(recipe.totalTime);
+    if (totalMinutes != null) {
+      // No explicit cookTime: if prepTime is known, the remainder is cook
+      // time; otherwise there's no split available, so the whole total is
+      // reported as cook time (the more inclusive bucket of the two).
+      cookMinutes = prepMinutes != null ? Math.max(0, totalMinutes - prepMinutes) : totalMinutes;
+    }
+  }
+
+  const stepTotalMinutes = (prepMinutes ?? 0) + (cookMinutes ?? 0);
+  const perStepMinutesList = stepTotalMinutes > 0 ? distributeMinutes(stepTotalMinutes, instructions.length) : null;
 
   let imageUrl: string | null = null;
   if (typeof recipe.image === "string") imageUrl = recipe.image;
@@ -85,7 +107,12 @@ export function jsonLdToDraft(recipe: SchemaOrgRecipe): RecipeDraft | null {
     complexity: null,
     servings: Array.isArray(recipe.recipeYield) ? recipe.recipeYield[0] ?? null : recipe.recipeYield ?? null,
     imageUrl,
+    prepMinutes,
+    cookMinutes,
     ingredients: ingredients.map((raw) => ({ rawText: raw, quantity: null, unit: null, name: raw })),
-    steps: instructions.map((instruction) => ({ instruction, estimatedMinutes: perStepMinutes })),
+    steps: instructions.map((instruction, index) => ({
+      instruction,
+      estimatedMinutes: perStepMinutesList ? perStepMinutesList[index] : null,
+    })),
   };
 }

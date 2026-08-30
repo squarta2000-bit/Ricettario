@@ -1,0 +1,2 @@
+[ 6071733ms] [ERROR] Failed to load resource: net::ERR_NETWORK_IO_SUSPENDED @ https://shfalrsfypruoammidsj.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[19252867ms] [ERROR] Failed to load resource: net::ERR_NETWORK_IO_SUSPENDED @ https://shfalrsfypruoammidsj.supabase.co/auth/v1/token?grant_type=refresh_token:0

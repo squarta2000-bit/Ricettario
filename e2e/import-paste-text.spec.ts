@@ -11,9 +11,9 @@ test('paste recipe text, review, and save it without a source link', async ({ pa
       .fill('Three-Second Soup\n1 can tomatoes\nStir.\nServe.')
     await page.getByRole('button', { name: 'Extract recipe from text' }).click()
 
-    // The import edge function isn't deployed in this environment, so this
-    // exercises the graceful failure path, same as the existing URL-import test.
-    await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible()
+    // This hits the real LLM extraction call, which can take longer than
+    // the default 5s expect timeout under real network latency.
+    await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible({ timeout: 20000 })
     await page.screenshot({ path: 'screenshot/import-paste-text-review.png' })
 
     await page.getByLabel('Title').fill('Pasted Soup')

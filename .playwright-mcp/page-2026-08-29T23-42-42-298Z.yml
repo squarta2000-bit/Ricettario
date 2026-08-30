@@ -1,0 +1,56 @@
+- generic [ref=f6e2]:
+  - generic [ref=f6e47]:
+    - link "Recipes" [ref=f6e48] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f6e51]:
+      - generic [ref=f6e52]:
+        - 'heading "Lasagne alla bolognese : Ricetta originale e Consigli di nonna" [level=1] [ref=f6e53]'
+        - paragraph [ref=f6e54]: Serves 6 · 160 min · Facile
+      - link "Source" [ref=f6e55] [cursor=pointer]:
+        - /url: https://www.tavolartegusto.it/ricetta/lasagne-alla-bolognese/
+    - link "Start cooking" [ref=f6e61] [cursor=pointer]:
+      - /url: /recipe/11c6a348-ad75-4678-b7d9-fe4e47209a62/cook
+    - heading "Ingredients" [level=2] [ref=f6e62]
+    - list [ref=f6e63]:
+      - listitem [ref=f6e64]: 150 gr di farina di grano tenero ‘00
+      - listitem [ref=f6e65]: 50 gr di farina ‘0
+      - listitem [ref=f6e66]: 2 uova intere grandi sale q.b.
+      - listitem [ref=f6e67]: 600 gr di carne macinata di manzo (muscolo, spalla, punta di petto o pancia)
+      - listitem [ref=f6e68]: 250 gr di carne macinata di maiale (lombo o capocollo)
+      - listitem [ref=f6e69]: 150 gr di pancetta dolce
+      - listitem [ref=f6e70]: 700 ml di passata di pomodoro corposa
+      - listitem [ref=f6e71]: 1 cipolla bianca piccola
+      - listitem [ref=f6e72]: 70 gr di sedano
+      - listitem [ref=f6e73]: 70 gr di carota
+      - listitem [ref=f6e74]: 3 cucchiai di olio extravergine
+      - listitem [ref=f6e75]: 100 ml di vino rosso
+      - listitem [ref=f6e76]: 50 ml di latte intero
+      - listitem [ref=f6e77]: 200 gr di brodo vegetale (oppure acqua)
+      - listitem [ref=f6e78]: sale
+      - listitem [ref=f6e79]: 500 gr di latte intero
+      - listitem [ref=f6e80]: 50 gr di burro
+      - listitem [ref=f6e81]: 50 gr di farina
+      - listitem [ref=f6e82]: sale
+      - listitem [ref=f6e83]: pepe
+      - listitem [ref=f6e84]: 250 gr di parmigiano
+    - heading "Steps" [level=2] [ref=f6e85]
+    - list [ref=f6e86]:
+      - listitem [ref=f6e87]:
+        - text: Prima di tutto preparate il ragù alla bolognese, lavando e tritando cipolla, il sedano e carota. Poi rosolate la pancetta con olio per un paio di minuti fino a farla sudare in una pentola alta e capiente. (Per una versione più leggera potete omettere la pancetta). Poi aggiungete fate soffriggere anche le verdure per circa 5 minuti. Infine aggiungete le carni macinate sbriciolate con il cucchiaio di legno e lasciatele rosolare per circa 10 minuti a fuoco moderato, finche tutti i succhi non saranno asciugati. Poi sfumate con il vino e solo quando è ben evaporato, aggiungete la salsa di pomodoro insieme a metà dell’acqua con cui avrete riempito la bottiglia della salsa. ( che potete sostituire con il brodo vegetale). Una volta che il ragù inizia a bollire, abbassata la fiamma e fate cuocere a fuoco lentissimo con coperchio per circa 3 h girando di tanto in tanto e versando a poco a poco l’acqua restante. A fine cottura aggiungete il latte e infine il sale. Il risultato finale dev’essere un composto non liquido ma allo stesso tempo cremoso. Se volete qualche consiglio aggiuntivo e vedere le foto dei passaggi vi consiglio di vedere l’articolo Ragù alla bolognese
+        - generic [ref=f6e88]: (27 min)
+      - listitem [ref=f6e89]:
+        - text: Quando il ragù è a fine cottura, preparate la sfoglia fresca Prima di tutto disponete la farina a fontana su una spianatoia, unite al centro uova e sale e iniziate a incorporare la farina con una forchetta dal centro man mano incorporate i lati. Quando la crema di uova diventa più densa, raccogliete la farina con un tarocco fino a formare un impasto. Impastate energicamente con le mani finché il panetto non risulta liscio e morbido (se troppo duro, aggiungete un cucchiaio d’acqua tiepida). Avvolgete in pellicola e lasciate riposare 30–40 minuti. Poi dividete in 4 parti (se intendete fare 5 strati di lasagne alla bolognese dividete in 5 parti, massimo 7 strati) Stendete ogni pezzo in una sfoglia di 0,5 mm, infarinando leggermente piano e il matterello lungo Una volta pronta la sfoglia vi consiglio di tagliare i rettangoli direttamente a misura della vostra teglia. In modo da avere strati uniformi. Se volete qualche consiglio in più potete guardare il mio articolo sulla Pasta fatta in casa
+        - generic [ref=f6e90]: (27 min)
+      - listitem [ref=f6e91]:
+        - text: "Infine preparate la Besciamella mescolando sul fuoco burro con la farina, aggiungendo piano piano latte e girando costantemente fino ad ottenere un composto morbido e liscio. Infine salate. Coprite con una pellicola a contatto per non far formare la crosticina. Se volete approfondire il procedimento con video guardate il mio articolo della Besciamella Una volta che le basi sono pronte e ben fredde potete assemblare in teglia. Assemblare le lasagne alla bolognese Prima di tutto aggiungete in una teglia 1 mestolo abbondate di ragù , distribuitelo bene sul fondo anche nei lati in modo da realizzare uno strato. Poi una una sfoglia di lasagna in modo da ricoprire la base:"
+        - generic [ref=f6e92]: (27 min)
+      - listitem [ref=f6e93]:
+        - text: "A questo punto iniziate a farcire, aggiungete prima 2 mestoli di ragù , poi qualche cucchiaio sparso di besciamella precedentemente mescolata resa morbida con 1 cucchiaio di latte freddo. Infine aggiungete una spolverata di parmigiano su tutto lo strato:"
+        - generic [ref=f6e94]: (27 min)
+      - listitem [ref=f6e95]:
+        - text: Infine aggiungete un nuovo rettangolo di sfoglia all’uovo e continuate ad assemblare seguendo ragù – besciamella- parmigiano fino ad esaurimento ingredienti. Alla fine ricoprite l’ultimo strato di pasta con 2 mestoli di ragù, qualche cucchiaio di besciamella e una spolverata di parmigiano.
+        - generic [ref=f6e96]: (26 min)
+      - listitem [ref=f6e97]:
+        - text: Cottura delle Lasagne alla bolognese Prima di tutto coprite con un foglio di alluminio la teglia, facendo attenzione a non toccare il condimento, questo passaggio è un piccolo segreto che mi hanno svelato per far cuocere in maniera uniforme gli strati, facendoli uniformare a puntino in modo che non si bruci la superficie immediatamente. Infine cuocete in forno già preriscaldato, statico a 180° ( ventilato a 160°) nella parte centrale per circa 30 minuti Trascorso il tempo indicato, eliminate il foglio di alluminio, trasferite le lasagne alla bolognese al piano superiore e lasciate cuocere per ancora 10 – 15 minuti. Gli ultimi 5 minuti azionate il grill e alzate a 200° per avere la crosta croccantina. Sfornate e lasciate raffreddate per almeno 15 minuti prima di servire. Ecco pronte le vostre Lasagne alla bolognese
+        - generic [ref=f6e98]: (26 min)
+  - region "Notifications alt+T"

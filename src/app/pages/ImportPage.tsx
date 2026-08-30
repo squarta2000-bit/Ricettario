@@ -102,7 +102,16 @@ export default function ImportPage() {
         }
       }
       setErrorMessage(message)
-      setDraft({ title: '', complexity: null, servings: null, imageUrl: null, ingredients: [], steps: [] })
+      setDraft({
+        title: '',
+        complexity: null,
+        servings: null,
+        imageUrl: null,
+        prepMinutes: null,
+        cookMinutes: null,
+        ingredients: [],
+        steps: [],
+      })
       setStatus('error')
       return
     }
@@ -132,6 +141,8 @@ export default function ImportPage() {
         imageUrl: draft.imageUrl,
         complexity: draft.complexity,
         servings: draft.servings,
+        prepMinutes: draft.prepMinutes,
+        cookMinutes: draft.cookMinutes,
         ingredients: draft.ingredients,
         steps: draft.steps,
       })

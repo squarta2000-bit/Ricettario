@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { getRecipe } from '../lib/recipesApi'
+import { formatRecipeDuration } from '../lib/formatDuration'
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { BackLink } from '../components/BackLink'
@@ -38,7 +39,7 @@ export default function RecipeDetailPage() {
     : null
   const metadataParts = [
     recipe.servings ? `Serves ${recipe.servings}` : null,
-    totalMinutes != null ? `${totalMinutes} min` : null,
+    formatRecipeDuration({ prepMinutes: recipe.prepMinutes, cookMinutes: recipe.cookMinutes, totalMinutes }),
     recipe.complexity,
   ].filter((part): part is string => Boolean(part))
 

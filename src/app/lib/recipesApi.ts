@@ -10,13 +10,15 @@ export function sumStepMinutes(steps: { estimated_minutes: number | null }[]): n
 export async function listRecipes(): Promise<RecipeListItem[]> {
   const { data, error } = await supabase
     .from('recipes')
-    .select('id, title, complexity, steps(estimated_minutes)')
+    .select('id, title, complexity, prep_minutes, cook_minutes, steps(estimated_minutes)')
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []).map((row) => ({
     id: row.id,
     title: row.title,
     complexity: row.complexity,
+    prepMinutes: row.prep_minutes,
+    cookMinutes: row.cook_minutes,
     totalMinutes: sumStepMinutes(row.steps),
   }))
 }
@@ -37,6 +39,8 @@ export async function getRecipe(id: string): Promise<RecipeWithDetails> {
     imageUrl: data.image_url,
     complexity: data.complexity,
     servings: data.servings,
+    prepMinutes: data.prep_minutes,
+    cookMinutes: data.cook_minutes,
     createdAt: data.created_at,
     ingredients: [...data.ingredients]
       .sort((a, b) => a.position - b.position)
@@ -68,6 +72,8 @@ export interface SaveRecipeInput {
   imageUrl: string | null
   complexity: string | null
   servings: string | null
+  prepMinutes: number | null
+  cookMinutes: number | null
   ingredients: { rawText: string; quantity: number | null; unit: string | null; name: string }[]
   steps: { instruction: string; estimatedMinutes: number | null }[]
 }
@@ -86,6 +92,8 @@ export async function saveRecipe(input: SaveRecipeInput): Promise<string> {
       image_url: input.imageUrl,
       complexity: input.complexity,
       servings: input.servings,
+      prep_minutes: input.prepMinutes,
+      cook_minutes: input.cookMinutes,
     })
     .select('id')
     .single()

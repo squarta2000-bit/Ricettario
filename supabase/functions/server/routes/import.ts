@@ -5,6 +5,7 @@ import { extractRecipeWithLlm, type MessagesClient } from "../extraction/llmExtr
 import { extractRecipeFromImages, type ImageInput } from "../extraction/llmExtractImages.ts";
 import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
 import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
+import { mergeDrafts } from "../extraction/mergeDrafts.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
 
@@ -80,10 +81,14 @@ export function buildImportApp(deps: ImportAppDeps) {
           if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);
           const html = await pageResponse.text();
           const jsonLd = findRecipeJsonLd(html);
-          draft = jsonLd ? jsonLdToDraft(jsonLd) : null;
-          if (!draft) {
-            draft = await extractRecipeWithLlm(htmlToVisibleText(html), deps.llmClientFactory());
-          }
+          const jsonLdDraft = jsonLd ? jsonLdToDraft(jsonLd) : null;
+          // Always run the LLM too, even when JSON-LD is present: JSON-LD
+          // has no complexity/difficulty field at all, and often lacks a
+          // prep/cook time split - the LLM recovers those from the page's
+          // visible text. mergeDrafts still prefers JSON-LD's structured
+          // ingredients/steps/title over the LLM's independent guess at them.
+          const llmDraft = await extractRecipeWithLlm(htmlToVisibleText(html), deps.llmClientFactory());
+          draft = mergeDrafts(jsonLdDraft, llmDraft);
         }
       } else {
         return c.json({ error: `Unsupported import type: ${String(type)}` }, 400);

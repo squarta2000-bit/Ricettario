@@ -80,7 +80,7 @@ Deno.test("records an import attempt for every accepted request, regardless of o
   assertEquals(recordedForUserId, "user-1");
 });
 
-Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
+Deno.test("merges JSON-LD's structure with the LLM's complexity, calling the LLM even when JSON-LD is present", async () => {
   await withFixtureServer(JSONLD_HTML, async (url) => {
     let llmCalled = false;
     const app = buildImportApp({
@@ -89,7 +89,13 @@ Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
       fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
       llmClientFactory: () => {
         llmCalled = true;
-        return fakeLlmClient({});
+        return fakeLlmClient({
+          title: "LLM's own guess, should be ignored",
+          complexity: "Facile",
+          servings: null,
+          ingredients: [],
+          steps: [],
+        });
       },
       countRecentImports: async () => 0,
       recordImportAttempt: async () => {},
@@ -101,8 +107,12 @@ Deno.test("uses the JSON-LD fast path without calling the LLM", async () => {
     });
     const body = await response.json();
     assertEquals(response.status, 200);
+    // JSON-LD's title/ingredients win...
     assertEquals(body.draft.title, "Soup");
-    assertEquals(llmCalled, false);
+    assertEquals(body.draft.ingredients.length, 1);
+    // ...but complexity - which JSON-LD never has - comes from the LLM.
+    assertEquals(body.draft.complexity, "Facile");
+    assertEquals(llmCalled, true);
   });
 });
 

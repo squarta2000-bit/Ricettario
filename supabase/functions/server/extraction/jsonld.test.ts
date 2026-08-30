@@ -41,9 +41,51 @@ Deno.test("jsonLdToDraft maps ingredients, steps, servings, and splits totalTime
   assertEquals(draft?.ingredients.length, 2);
   assertEquals(draft?.steps.length, 2);
   assertEquals(draft?.steps[0].estimatedMinutes, 15); // 30 min / 2 steps
+  assertEquals(draft?.cookMinutes, 30);
+  assertEquals(draft?.prepMinutes, null);
 });
 
 Deno.test("jsonLdToDraft returns null when ingredients or instructions are missing", () => {
   const draft = jsonLdToDraft({ "@type": "Recipe", name: "Empty" });
   assertEquals(draft, null);
+});
+
+Deno.test("jsonLdToDraft reads prepTime and cookTime separately when both are given", () => {
+  const draft = jsonLdToDraft({
+    "@type": "Recipe",
+    name: "Lasagne",
+    prepTime: "PT40M",
+    cookTime: "PT2H",
+    recipeIngredient: ["pasta", "ragu"],
+    recipeInstructions: ["Make the ragu.", "Assemble.", "Bake."],
+  });
+  assertExists(draft);
+  assertEquals(draft?.prepMinutes, 40);
+  assertEquals(draft?.cookMinutes, 120);
+  // 160 total across 3 steps must sum back EXACTLY - no rounding drift.
+  const stepSum = draft!.steps.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0);
+  assertEquals(stepSum, 160);
+  assertEquals(draft?.steps[0].estimatedMinutes, 54); // floor(160/3)+1 (remainder step)
+  assertEquals(draft?.steps[1].estimatedMinutes, 53);
+  assertEquals(draft?.steps[2].estimatedMinutes, 53);
+});
+
+Deno.test("jsonLdToDraft derives cookTime from totalTime minus prepTime when cookTime is absent", () => {
+  const draft = jsonLdToDraft({
+    "@type": "Recipe",
+    name: "Bread",
+    prepTime: "PT20M",
+    totalTime: "PT50M",
+    recipeIngredient: ["flour"],
+    recipeInstructions: ["Knead.", "Bake."],
+  });
+  assertExists(draft);
+  assertEquals(draft?.prepMinutes, 20);
+  assertEquals(draft?.cookMinutes, 30);
+});
+
+Deno.test("jsonLdToDraft never invents a complexity value", () => {
+  const recipe = findRecipeJsonLd(HTML_WITH_RECIPE);
+  const draft = jsonLdToDraft(recipe!);
+  assertEquals(draft?.complexity, null);
 });

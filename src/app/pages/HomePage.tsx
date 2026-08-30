@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listRecipes } from '../lib/recipesApi'
 import { supabase } from '../lib/supabaseClient'
+import { formatRecipeDuration } from '../lib/formatDuration'
 import type { RecipeListItem } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
@@ -48,7 +49,7 @@ export default function HomePage() {
               <Card className="p-4 h-full hover:bg-accent transition-colors">
                 <h2 className="font-serif text-lg mb-1">{recipe.title}</h2>
                 <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-                  {recipe.totalMinutes != null ? `${recipe.totalMinutes} min` : 'Time unknown'}
+                  {formatRecipeDuration(recipe) ?? 'Time unknown'}
                   {recipe.complexity ? ` · ${recipe.complexity}` : ''}
                 </p>
               </Card>

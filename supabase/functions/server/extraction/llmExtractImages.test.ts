@@ -39,4 +39,5 @@ Deno.test("sends one text instruction block followed by an image block per photo
   assertEquals(content[0].type, "text");
   assertEquals(content[1], { type: "image", source: { type: "base64", media_type: "image/jpeg", data: "aaa" } });
   assertEquals(content[2], { type: "image", source: { type: "base64", media_type: "image/jpeg", data: "bbb" } });
+  assertEquals(params.temperature, 0);
 });

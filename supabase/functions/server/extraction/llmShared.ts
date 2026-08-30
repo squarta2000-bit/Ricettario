@@ -6,6 +6,8 @@ export const DRAFT_SCHEMA = {
     title: { type: "string" },
     complexity: { type: ["string", "null"] },
     servings: { type: ["string", "null"] },
+    prepMinutes: { type: ["number", "null"] },
+    cookMinutes: { type: ["number", "null"] },
     ingredients: {
       type: "array",
       items: {

@@ -1,0 +1,15 @@
+- generic [ref=f3e2]:
+  - generic [ref=f3e16]:
+    - link "Recipes" [ref=f3e17] [cursor=pointer]:
+      - /url: /
+    - heading "Import a recipe" [level=1] [ref=f3e20]
+    - generic [ref=f3e21]:
+      - tablist [ref=f3e22]:
+        - tab "From URL" [selected] [ref=f3e23]
+        - tab "Take Photos" [ref=f3e24]
+        - tab "Paste Text" [ref=f3e25]
+      - tabpanel "From URL" [ref=f3e26]:
+        - generic [ref=f3e27]:
+          - textbox "https://example.com/recipe or a YouTube URL" [ref=f3e28]
+          - button "Import" [ref=f3e29]
+  - region "Notifications alt+T"

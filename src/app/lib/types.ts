@@ -25,6 +25,8 @@ export interface Recipe {
   imageUrl: string | null
   complexity: string | null
   servings: string | null
+  prepMinutes: number | null
+  cookMinutes: number | null
   createdAt: string
 }
 
@@ -37,6 +39,8 @@ export interface RecipeListItem {
   id: string
   title: string
   complexity: string | null
+  prepMinutes: number | null
+  cookMinutes: number | null
   totalMinutes: number | null
 }
 
@@ -60,6 +64,8 @@ export interface RecipeDraft {
   complexity: string | null
   servings: string | null
   imageUrl: string | null
+  prepMinutes: number | null
+  cookMinutes: number | null
   ingredients: RecipeDraftIngredient[]
   steps: RecipeDraftStep[]
 }

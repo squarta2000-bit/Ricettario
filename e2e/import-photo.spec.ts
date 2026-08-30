@@ -15,9 +15,9 @@ test('take photos of a recipe, review, and save it without a source link', async
 
     await page.getByRole('button', { name: 'Extract recipe from photos' }).click()
 
-    // The import edge function isn't deployed in this environment, so this
-    // exercises the graceful failure path, same as the other import tests.
-    await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible()
+    // This hits the real vision LLM extraction call, which can take longer
+    // than the default 5s expect timeout under real network latency.
+    await expect(page.getByRole('heading', { name: 'Review before saving' })).toBeVisible({ timeout: 20000 })
     await page.screenshot({ path: 'screenshot/import-photo-review.png' })
 
     await page.getByLabel('Title').fill('Photographed Soup')
