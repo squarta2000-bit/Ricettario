@@ -8,6 +8,7 @@ import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeListItem } from '../lib/types'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip'
 import { LanguageSelector } from '../components/LanguageSelector'
 import {
   AlertDialog,
@@ -76,24 +77,34 @@ export default function HomePage() {
           <div className="flex gap-2">
             <LanguageSelector />
             <div className="flex gap-1" role="group" aria-label={t('home.viewMode')}>
-              <Button
-                variant={viewMode === 'card' ? 'secondary' : 'outline'}
-                size="icon"
-                aria-label={t('home.cardView')}
-                aria-pressed={viewMode === 'card'}
-                onClick={() => selectViewMode('card')}
-              >
-                <LayoutGrid />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'outline'}
-                size="icon"
-                aria-label={t('home.listView')}
-                aria-pressed={viewMode === 'list'}
-                onClick={() => selectViewMode('list')}
-              >
-                <ListIcon />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === 'card' ? 'secondary' : 'outline'}
+                    size="icon"
+                    aria-label={t('home.cardView')}
+                    aria-pressed={viewMode === 'card'}
+                    onClick={() => selectViewMode('card')}
+                  >
+                    <LayoutGrid />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('home.cardView')}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'outline'}
+                    size="icon"
+                    aria-label={t('home.listView')}
+                    aria-pressed={viewMode === 'list'}
+                    onClick={() => selectViewMode('list')}
+                  >
+                    <ListIcon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('home.listView')}</TooltipContent>
+              </Tooltip>
             </div>
             <Button asChild>
               <Link to="/import">{t('home.importRecipe')}</Link>
@@ -153,14 +164,29 @@ export default function HomePage() {
                   </p>
                 </Link>
                 <div className="flex gap-1 shrink-0">
-                  <Button asChild size="icon" variant="outline" aria-label={t('home.edit')}>
-                    <Link to={`/recipe/${recipe.id}/edit`}>
-                      <Pencil />
-                    </Link>
-                  </Button>
-                  <Button size="icon" variant="outline" aria-label={t('home.delete')} onClick={() => setDeleteTarget(recipe)}>
-                    <Trash2 />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="outline" aria-label={t('home.edit')}>
+                        <Link to={`/recipe/${recipe.id}/edit`}>
+                          <Pencil />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('home.edit')}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={t('home.delete')}
+                        onClick={() => setDeleteTarget(recipe)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('home.delete')}</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             ))}

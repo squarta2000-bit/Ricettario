@@ -3,6 +3,7 @@ import { LANGUAGES, LANGUAGE_NAMES, type Language } from '../lib/i18n/translatio
 import { FlagFR, FlagGB, FlagIT } from './flags'
 import { Button } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
 const FLAGS: Record<Language, () => React.JSX.Element> = {
   en: FlagGB,
@@ -16,11 +17,16 @@ export function LanguageSelector() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t('language.label')}>
-          <CurrentFlag />
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" aria-label={t('language.label')}>
+              <CurrentFlag />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t('language.label')}</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end">
         {LANGUAGES.map((lang) => {
           const Flag = FLAGS[lang]
