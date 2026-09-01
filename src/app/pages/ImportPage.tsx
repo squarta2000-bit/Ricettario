@@ -7,6 +7,7 @@ import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeDraft } from '../lib/types'
 import { compressImageFile, type CompressedImage } from '../lib/imageResize'
 import { sampleVideoFrames } from '../lib/videoFrameSampler'
+import { isInstagramOrFacebookUrl } from '../lib/metaUrl'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
@@ -152,7 +153,14 @@ export default function ImportPage() {
     })
     if (error || !data?.draft) {
       const isRateLimited = error?.context?.status === 429
-      setErrorMessage(isRateLimited ? t('import.rateLimitError') : t('import.genericImportError'))
+      const isMetaUrl = body.type === 'url' && isInstagramOrFacebookUrl(body.url)
+      setErrorMessage(
+        isRateLimited
+          ? t('import.rateLimitError')
+          : isMetaUrl
+            ? t('import.metaImportError')
+            : t('import.genericImportError'),
+      )
       setDraft({
         title: '',
         complexity: null,

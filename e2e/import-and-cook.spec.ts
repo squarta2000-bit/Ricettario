@@ -6,7 +6,7 @@ test('review-and-save a manually entered recipe, then cook it', async ({ page })
   try {
     await page.goto('/import')
     await page
-      .getByPlaceholder('https://example.com/recipe or a YouTube URL')
+      .getByPlaceholder('https://example.com/recipe, a YouTube URL, or an Instagram/Facebook Reel link')
       .fill('https://nonexistent.invalid/recipe')
     await page.getByRole('button', { name: 'Import' }).click()
 
