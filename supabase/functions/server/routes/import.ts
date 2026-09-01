@@ -5,6 +5,7 @@ import { extractRecipeWithLlm, type MessagesClient } from "../extraction/llmExtr
 import { extractRecipeFromImages, type ImageInput } from "../extraction/llmExtractImages.ts";
 import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
 import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
+import { detectMetaUrl } from "../extraction/metaOembed.ts";
 import { mergeDrafts } from "../extraction/mergeDrafts.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
@@ -13,6 +14,7 @@ export interface ImportAppDeps {
   getUserId: (authHeader: string | undefined) => Promise<string | null>;
   fetchYoutubeTranscript: (videoId: string) => Promise<string>;
   fetchYoutubeVideoInfo: (videoId: string) => Promise<YoutubeVideoInfo>;
+  fetchMetaCaption: (url: string, platform: "instagram" | "facebook") => Promise<string>;
   llmClientFactory: () => MessagesClient;
   countRecentImports: (userId: string) => Promise<number>;
   recordImportAttempt: (userId: string) => Promise<void>;
@@ -45,7 +47,7 @@ export function buildImportApp(deps: ImportAppDeps) {
           : undefined;
 
       let draft: RecipeDraft | null;
-      let sourceType: "web" | "youtube" | "text" | "photo";
+      let sourceType: "web" | "youtube" | "text" | "photo" | "instagram" | "facebook";
 
       if (type === "text") {
         if (typeof rawBody.text !== "string") return c.json({ error: "Missing text" }, 400);
@@ -61,7 +63,8 @@ export function buildImportApp(deps: ImportAppDeps) {
         if (typeof rawBody.url !== "string") return c.json({ error: "Missing url" }, 400);
         const url = rawBody.url;
         const videoId = extractYoutubeVideoId(url);
-        sourceType = videoId ? "youtube" : "web";
+        const metaMatch = videoId ? null : detectMetaUrl(url);
+        sourceType = videoId ? "youtube" : metaMatch ? metaMatch.platform : "web";
 
         if (videoId) {
           let sourceText: string;
@@ -76,6 +79,9 @@ export function buildImportApp(deps: ImportAppDeps) {
             sourceText = `${info.title}\n\n${info.description}`;
           }
           draft = await extractRecipeWithLlm(sourceText, deps.llmClientFactory());
+        } else if (metaMatch) {
+          const caption = await deps.fetchMetaCaption(url, metaMatch.platform);
+          draft = await extractRecipeWithLlm(caption, deps.llmClientFactory());
         } else {
           const pageResponse = await fetch(url);
           if (!pageResponse.ok) throw new Error(`Failed to fetch page: ${pageResponse.status}`);

@@ -24,6 +24,7 @@ Deno.test("returns 401 when there is no Authorization header", async () => {
     getUserId: async () => null,
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -41,6 +42,7 @@ Deno.test("returns 429 when the daily import limit is reached, without recording
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 20,
     recordImportAttempt: async () => {
@@ -62,6 +64,7 @@ Deno.test("records an import attempt for every accepted request, regardless of o
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async (userId) => {
@@ -87,6 +90,7 @@ Deno.test("merges JSON-LD's structure with the LLM's complexity, calling the LLM
       getUserId: async () => "user-1",
       fetchYoutubeTranscript: async () => "",
       fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+      fetchMetaCaption: async () => "",
       llmClientFactory: () => {
         llmCalled = true;
         return fakeLlmClient({
@@ -122,6 +126,7 @@ Deno.test("falls back to the LLM when there is no JSON-LD", async () => {
       getUserId: async () => "user-1",
       fetchYoutubeTranscript: async () => "",
       fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+      fetchMetaCaption: async () => "",
       llmClientFactory: () =>
         fakeLlmClient({ title: "Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
       countRecentImports: async () => 0,
@@ -143,6 +148,7 @@ Deno.test("routes YouTube URLs through the transcript path", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "Chop onions. Simmer for ten minutes.",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () =>
       fakeLlmClient({ title: "Video Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
     countRecentImports: async () => 0,
@@ -170,6 +176,7 @@ Deno.test("falls back to the video's title/description when transcript fetching 
       title: "Parmigiana di Melanzane",
       description: "INGREDIENTI\nMelanzane 1,7 kg\nPassata di pomodoro 1 l",
     }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => ({
       messages: {
         create: async (params) => {
@@ -218,6 +225,7 @@ Deno.test("extracts a recipe from pasted text via the LLM, skipping the URL/tran
       return "";
     },
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () =>
       fakeLlmClient({ title: "Text Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
     countRecentImports: async () => 0,
@@ -240,6 +248,7 @@ Deno.test("returns 400 with a descriptive message for an unrecognized import typ
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -260,6 +269,7 @@ Deno.test("treats a bare { url } body with no type field as a URL import", async
       getUserId: async () => "user-1",
       fetchYoutubeTranscript: async () => "",
       fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+      fetchMetaCaption: async () => "",
       llmClientFactory: () => fakeLlmClient({}),
       countRecentImports: async () => 0,
       recordImportAttempt: async () => {},
@@ -281,6 +291,7 @@ Deno.test("returns 400 for type: text with a missing text field", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -298,6 +309,7 @@ Deno.test("returns 400 for type: url with a missing url field", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -315,6 +327,7 @@ Deno.test("returns 400 for type: images with a missing images field", async () =
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -332,6 +345,7 @@ Deno.test("returns 400 for type: images with images not an array", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -349,6 +363,7 @@ Deno.test("returns 400 for a body with no type and no url", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -366,6 +381,7 @@ Deno.test("extracts a recipe from photos via the LLM vision call", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () =>
       fakeLlmClient({ title: "Photo Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
     countRecentImports: async () => 0,
@@ -387,6 +403,7 @@ Deno.test("rejects an images request with no photos", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -404,6 +421,7 @@ Deno.test("rejects an images request with more than 5 photos", async () => {
     getUserId: async () => "user-1",
     fetchYoutubeTranscript: async () => "",
     fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
     llmClientFactory: () => fakeLlmClient({}),
     countRecentImports: async () => 0,
     recordImportAttempt: async () => {},
@@ -415,4 +433,74 @@ Deno.test("rejects an images request with more than 5 photos", async () => {
     body: JSON.stringify({ type: "images", images: sixImages }),
   });
   assertEquals(response.status, 400);
+});
+
+Deno.test("routes Instagram URLs through the Meta caption path", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async (_url, platform) => {
+      assertEquals(platform, "instagram");
+      return "1kg flour, 500ml water. Mix and bake.";
+    },
+    llmClientFactory: () =>
+      fakeLlmClient({ title: "Reel Bread", complexity: null, servings: null, ingredients: [], steps: [] }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "url", url: "https://www.instagram.com/reel/abc123/" }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.sourceType, "instagram");
+  assertEquals(body.draft.title, "Reel Bread");
+});
+
+Deno.test("routes Facebook URLs through the Meta caption path", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async (_url, platform) => {
+      assertEquals(platform, "facebook");
+      return "Chop onions. Simmer for ten minutes.";
+    },
+    llmClientFactory: () =>
+      fakeLlmClient({ title: "Reel Soup", complexity: null, servings: null, ingredients: [], steps: [] }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "url", url: "https://www.facebook.com/reel/123456" }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.sourceType, "facebook");
+  assertEquals(body.draft.title, "Reel Soup");
+});
+
+Deno.test("falls back to the generic error path when Meta caption fetching fails", async () => {
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => {
+      throw new Error("Post has no caption to extract a recipe from");
+    },
+    llmClientFactory: () => fakeLlmClient({}),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "url", url: "https://www.instagram.com/reel/abc123/" }),
+  });
+  assertEquals(response.status, 502);
 });

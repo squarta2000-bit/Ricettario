@@ -6,6 +6,7 @@ import { buildImportApp } from "./routes/import.ts";
 import { buildLoginApp } from "./routes/login.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
 import { fetchYoutubeVideoInfo } from "./extraction/youtubeDescription.ts";
+import { fetchMetaCaption } from "./extraction/metaOembed.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
 import { mintSessionForEmail } from "./auth/mintSession.ts";
 import { countRecentImports, recordImportAttempt } from "./rateLimit.ts";
@@ -32,6 +33,8 @@ const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY")!;
 const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY")!;
+const metaAppId = Deno.env.get("META_APP_ID")!;
+const metaClientToken = Deno.env.get("META_CLIENT_TOKEN")!;
 
 app.route(
   "/",
@@ -45,6 +48,7 @@ app.route(
     },
     fetchYoutubeTranscript: (videoId) => fetchYoutubeTranscript(videoId, fetch),
     fetchYoutubeVideoInfo: (videoId) => fetchYoutubeVideoInfo(videoId, youtubeApiKey, fetch),
+    fetchMetaCaption: (url, platform) => fetchMetaCaption(url, platform, `${metaAppId}|${metaClientToken}`, fetch),
     llmClientFactory: () => createAnthropicMessagesClient(anthropicApiKey),
     countRecentImports: (userId) => countRecentImports(supabaseUrl, serviceRoleKey, userId),
     recordImportAttempt: (userId) => recordImportAttempt(supabaseUrl, serviceRoleKey, userId),
