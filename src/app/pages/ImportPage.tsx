@@ -6,6 +6,7 @@ import { saveRecipe, updateRecipe, getRecipe } from '../lib/recipesApi'
 import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeDraft } from '../lib/types'
 import { compressImageFile, type CompressedImage } from '../lib/imageResize'
+import { sampleVideoFrames } from '../lib/videoFrameSampler'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
@@ -14,7 +15,7 @@ import { BackLink } from '../components/BackLink'
 import { LanguageSelector } from '../components/LanguageSelector'
 
 type ImportMode = 'url' | 'photos' | 'text'
-type SourceType = 'web' | 'youtube' | 'photo' | 'text'
+type SourceType = 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook'
 
 type ImportRequestBody =
   | { type: 'url'; url: string }
@@ -26,6 +27,7 @@ const MAX_PHOTOS = 5
 interface StagedPhoto {
   previewUrl: string
   compressed: CompressedImage
+  source: 'photo' | 'video'
 }
 
 export default function ImportPage() {
@@ -84,42 +86,64 @@ export default function ImportPage() {
     event.target.value = ''
     if (files.length === 0) return
 
-    const remainingCapacity = MAX_PHOTOS - photos.length
-    const filesToAdd = files.slice(0, remainingCapacity)
-
     setIsCompressing(true)
     setPhotosError(null)
-    const createdPreviewUrls: string[] = []
-    try {
-      const newPhotos = await Promise.all(
-        filesToAdd.map(async (file) => {
-          const previewUrl = URL.createObjectURL(file)
-          createdPreviewUrls.push(previewUrl)
-          return { previewUrl, compressed: await compressImageFile(file) }
-        }),
-      )
-      setPhotos((current) => [...current, ...newPhotos])
-    } catch (err) {
-      createdPreviewUrls.forEach((url) => URL.revokeObjectURL(url))
-      setPhotosError(err instanceof Error ? err.message : t('import.photoProcessingError'))
-    } finally {
+    const newPhotos: StagedPhoto[] = []
+
+    function abort(message: string) {
+      newPhotos.forEach((p) => {
+        if (p.previewUrl.startsWith('blob:')) URL.revokeObjectURL(p.previewUrl)
+      })
+      setPhotosError(message)
       setIsCompressing(false)
     }
+
+    for (const file of files) {
+      const remainingCapacity = MAX_PHOTOS - photos.length - newPhotos.length
+      if (remainingCapacity <= 0) break
+      if (file.type.startsWith('video/')) {
+        try {
+          const frames = await sampleVideoFrames(file, remainingCapacity)
+          frames.forEach((frame) =>
+            newPhotos.push({
+              previewUrl: `data:${frame.mediaType};base64,${frame.data}`,
+              compressed: frame,
+              source: 'video',
+            }),
+          )
+        } catch {
+          abort(t('import.videoProcessingError'))
+          return
+        }
+      } else {
+        try {
+          const previewUrl = URL.createObjectURL(file)
+          newPhotos.push({ previewUrl, compressed: await compressImageFile(file), source: 'photo' })
+        } catch {
+          abort(t('import.photoProcessingError'))
+          return
+        }
+      }
+    }
+    setPhotos((current) => [...current, ...newPhotos])
+    setIsCompressing(false)
   }
 
   function handleRemovePhoto(index: number) {
     setPhotos((current) => {
-      URL.revokeObjectURL(current[index].previewUrl)
+      const removed = current[index]
+      if (removed.previewUrl.startsWith('blob:')) URL.revokeObjectURL(removed.previewUrl)
       return current.filter((_, i) => i !== index)
     })
   }
 
   function handlePhotosSubmit(event: FormEvent) {
     event.preventDefault()
-    runImport({ type: 'images', images: photos.map((p) => p.compressed) })
+    const hasVideoFrame = photos.some((p) => p.source === 'video')
+    runImport({ type: 'images', images: photos.map((p) => p.compressed) }, hasVideoFrame ? 'video' : undefined)
   }
 
-  async function runImport(body: ImportRequestBody) {
+  async function runImport(body: ImportRequestBody, sourceTypeOverride?: SourceType) {
     setStatus('importing')
     const { data: sessionData } = await supabase.auth.getSession()
     const { data, error } = await supabase.functions.invoke('server/import', {
@@ -143,7 +167,7 @@ export default function ImportPage() {
       return
     }
     setDraft(data.draft)
-    setSourceType(data.sourceType)
+    setSourceType(sourceTypeOverride ?? data.sourceType)
     setStatus('reviewing')
   }
 
@@ -236,7 +260,7 @@ export default function ImportPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 capture="environment"
                 multiple
                 className="hidden"

@@ -21,7 +21,7 @@ export interface Recipe {
   ownerId: string
   title: string
   sourceUrl: string | null
-  sourceType: 'web' | 'youtube' | 'photo' | 'text'
+  sourceType: 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook'
   imageUrl: string | null
   complexity: string | null
   servings: string | null
