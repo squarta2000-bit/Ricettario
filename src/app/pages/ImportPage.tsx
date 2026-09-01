@@ -206,7 +206,7 @@ export default function ImportPage() {
       const id = await saveRecipe({
         title: draft.title,
         sourceUrl: mode === 'url' ? url : null,
-        sourceType: mode === 'url' ? sourceType : mode === 'photos' ? 'photo' : 'text',
+        sourceType: mode === 'url' ? sourceType : mode === 'photos' ? (photos.some((p) => p.source === 'video') ? 'video' : 'photo') : 'text',
         imageUrl: draft.imageUrl,
         complexity: draft.complexity,
         servings: draft.servings,
