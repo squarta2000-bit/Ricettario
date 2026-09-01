@@ -28,16 +28,8 @@ export default function LoginPage() {
     setStatus('submitting')
     const { data, error } = await supabase.functions.invoke('server/login', { body: { email } })
     if (error || !data?.accessToken || !data?.refreshToken) {
-      let message = t('login.noAccountError')
-      if (error) {
-        try {
-          const errorBody = await error.context.json()
-          if (errorBody?.error) message = errorBody.error
-        } catch {
-          // fall back to the generic message above
-        }
-      }
-      setErrorMessage(message)
+      const isNoAccount = error?.context?.status === 404
+      setErrorMessage(isNoAccount ? t('login.noAccountError') : t('login.genericError'))
       setStatus('error')
       return
     }
@@ -47,7 +39,7 @@ export default function LoginPage() {
       refresh_token: data.refreshToken,
     })
     if (sessionError) {
-      setErrorMessage(sessionError.message)
+      setErrorMessage(t('login.genericError'))
       setStatus('error')
       return
     }
@@ -62,7 +54,7 @@ export default function LoginPage() {
       options: { emailRedirectTo: window.location.origin },
     })
     if (error) {
-      setErrorMessage(error.message)
+      setErrorMessage(t('login.genericError'))
       setStatus('error')
       return
     }

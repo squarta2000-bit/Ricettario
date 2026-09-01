@@ -127,16 +127,8 @@ export default function ImportPage() {
       headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
     })
     if (error || !data?.draft) {
-      let message = t('import.genericImportError')
-      if (error) {
-        try {
-          const errorBody = await error.context.json()
-          if (errorBody?.error) message = errorBody.error
-        } catch {
-          // fall back to the generic message above
-        }
-      }
-      setErrorMessage(message)
+      const isRateLimited = error?.context?.status === 429
+      setErrorMessage(isRateLimited ? t('import.rateLimitError') : t('import.genericImportError'))
       setDraft({
         title: '',
         complexity: null,
@@ -168,6 +160,8 @@ export default function ImportPage() {
   async function handleSave() {
     if (!draft) return
     setStatus('saving')
+    const ingredients = draft.ingredients.filter((i) => i.rawText.trim().length > 0)
+    const steps = draft.steps.filter((s) => s.instruction.trim().length > 0)
     try {
       if (editId) {
         await updateRecipe(editId, {
@@ -179,8 +173,8 @@ export default function ImportPage() {
           servings: draft.servings,
           prepMinutes: draft.prepMinutes,
           cookMinutes: draft.cookMinutes,
-          ingredients: draft.ingredients,
-          steps: draft.steps,
+          ingredients,
+          steps,
         })
         navigate(`/recipe/${editId}`)
         return
@@ -194,12 +188,12 @@ export default function ImportPage() {
         servings: draft.servings,
         prepMinutes: draft.prepMinutes,
         cookMinutes: draft.cookMinutes,
-        ingredients: draft.ingredients,
-        steps: draft.steps,
+        ingredients,
+        steps,
       })
       navigate(`/recipe/${id}`)
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : t('import.genericSaveError'))
+    } catch {
+      setErrorMessage(t('import.genericSaveError'))
       setStatus('error')
     }
   }
@@ -332,7 +326,6 @@ export default function ImportPage() {
                   ...d,
                   ingredients: e.target.value
                     .split('\n')
-                    .filter(Boolean)
                     .map((line) => ({ rawText: line, quantity: null, unit: null, name: line })),
                 },
             )
@@ -351,7 +344,6 @@ export default function ImportPage() {
                   ...d,
                   steps: e.target.value
                     .split('\n')
-                    .filter(Boolean)
                     .map((line, index) => ({
                       instruction: line,
                       estimatedMinutes: d.steps[index]?.estimatedMinutes ?? null,
