@@ -26,9 +26,16 @@ type ImportRequestBody =
 const MAX_PHOTOS = 5
 
 interface StagedPhoto {
+  id: string
   previewUrl: string
   compressed: CompressedImage
   source: 'photo' | 'video'
+}
+
+let stagedPhotoIdCounter = 0
+function nextStagedPhotoId(): string {
+  stagedPhotoIdCounter += 1
+  return `staged-photo-${stagedPhotoIdCounter}`
 }
 
 export default function ImportPage() {
@@ -107,6 +114,7 @@ export default function ImportPage() {
           const frames = await sampleVideoFrames(file, remainingCapacity)
           frames.forEach((frame) =>
             newPhotos.push({
+              id: nextStagedPhotoId(),
               previewUrl: `data:${frame.mediaType};base64,${frame.data}`,
               compressed: frame,
               source: 'video',
@@ -119,7 +127,7 @@ export default function ImportPage() {
       } else {
         try {
           const previewUrl = URL.createObjectURL(file)
-          newPhotos.push({ previewUrl, compressed: await compressImageFile(file), source: 'photo' })
+          newPhotos.push({ id: nextStagedPhotoId(), previewUrl, compressed: await compressImageFile(file), source: 'photo' })
         } catch {
           abort(t('import.photoProcessingError'))
           return
@@ -269,14 +277,13 @@ export default function ImportPage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,video/*"
-                capture="environment"
                 multiple
                 className="hidden"
                 onChange={handlePhotosSelected}
               />
               <div className="flex flex-wrap gap-2">
                 {photos.map((photo, index) => (
-                  <div key={photo.previewUrl} className="relative">
+                  <div key={photo.id} className="relative">
                     <img
                       src={photo.previewUrl}
                       alt={t('import.photoAlt', { n: index + 1 })}

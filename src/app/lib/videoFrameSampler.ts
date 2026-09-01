@@ -7,6 +7,28 @@ export function computeSampleTimestamps(durationSeconds: number, frameCount: num
   return Array.from({ length: count }, (_, i) => step * (i + 1))
 }
 
+// Ceiling on the whole sampling operation. Both the loadedmetadata and
+// seeked waits below only ever settle via an event or the video's own
+// `error` event - a stalled decode or a non-seekable file would otherwise
+// leave the returned promise pending forever, with no user-visible error.
+const SAMPLE_TIMEOUT_MS = 15000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
+}
+
 // Samples up to `frameCount` evenly-spaced frames from a video file entirely
 // client-side (no ffmpeg or server-side video processing available in the
 // Supabase edge function this app uses). Reuses the same resize/compression
@@ -17,6 +39,19 @@ export async function sampleVideoFrames(
   frameCount: number,
   maxDimension = 1500,
   quality = 0.8,
+): Promise<CompressedImage[]> {
+  return withTimeout(
+    sampleVideoFramesUnbounded(file, frameCount, maxDimension, quality),
+    SAMPLE_TIMEOUT_MS,
+    'Timed out while sampling video frames',
+  )
+}
+
+async function sampleVideoFramesUnbounded(
+  file: File,
+  frameCount: number,
+  maxDimension: number,
+  quality: number,
 ): Promise<CompressedImage[]> {
   const objectUrl = URL.createObjectURL(file)
   try {
@@ -40,6 +75,7 @@ export async function sampleVideoFrames(
     if (!ctx) throw new Error('Canvas is not supported in this browser')
 
     const frames: CompressedImage[] = []
+    const seenFrameData = new Set<string>()
     for (const timestamp of computeSampleTimestamps(video.duration, frameCount)) {
       await new Promise<void>((resolve, reject) => {
         video.onseeked = () => resolve()
@@ -48,7 +84,13 @@ export async function sampleVideoFrames(
       })
       ctx.drawImage(video, 0, 0, width, height)
       const dataUrl = canvas.toDataURL('image/jpeg', quality)
-      frames.push({ mediaType: 'image/jpeg', data: dataUrl.split(',')[1] })
+      const data = dataUrl.split(',')[1]
+      // Skip byte-identical frames (e.g. a source with less visual variety
+      // than the requested sample density) so callers don't get duplicate
+      // React keys and don't waste shared frame budget on the same image.
+      if (seenFrameData.has(data)) continue
+      seenFrameData.add(data)
+      frames.push({ mediaType: 'image/jpeg', data })
     }
     return frames
   } finally {
