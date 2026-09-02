@@ -261,12 +261,18 @@ export default function ImportPage() {
             </TabsList>
             <TabsContent value="url">
               <form onSubmit={handleUrlSubmit} className="space-y-4">
-                <Input
-                  placeholder={t('import.urlPlaceholder')}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  required
-                />
+                <div className="space-y-1">
+                  <Input
+                    placeholder={t('import.urlPlaceholder')}
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    aria-describedby="url-input-hint"
+                    required
+                  />
+                  <p id="url-input-hint" className="text-xs text-muted-foreground">
+                    {t('import.urlPlaceholder')}
+                  </p>
+                </div>
                 <Button type="submit" className="w-full" disabled={status === 'importing'}>
                   {status === 'importing' ? t('import.importing') : t('import.import')}
                 </Button>
