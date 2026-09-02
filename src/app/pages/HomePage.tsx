@@ -72,9 +72,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-8">
           <h1 className="text-3xl font-serif">Ricettario</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <LanguageSelector />
             <div className="flex gap-1" role="group" aria-label={t('home.viewMode')}>
               <Tooltip>
