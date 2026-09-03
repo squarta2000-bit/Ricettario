@@ -27,7 +27,7 @@ export function LanguageSelector() {
         </TooltipTrigger>
         <TooltipContent>{t('language.label')}</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" onCloseAutoFocus={(event) => event.preventDefault()}>
         {LANGUAGES.map((lang) => {
           const Flag = FLAGS[lang]
           return (
