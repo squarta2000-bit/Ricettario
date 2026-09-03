@@ -7,7 +7,7 @@ test('paste recipe text, review, and save it without a source link', async ({ pa
     await page.goto('/import')
     await page.getByRole('tab', { name: 'Paste Text' }).click()
     await page
-      .getByPlaceholder('Paste the recipe text here')
+      .getByLabel('Recipe text')
       .fill('Three-Second Soup\n1 can tomatoes\nStir.\nServe.')
     await page.getByRole('button', { name: 'Extract recipe from text' }).click()
 

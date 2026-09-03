@@ -262,8 +262,9 @@ export default function ImportPage() {
             <TabsContent value="url">
               <form onSubmit={handleUrlSubmit} className="space-y-4">
                 <div className="space-y-1">
+                  <label htmlFor="url-input" className="sr-only">{t('import.urlLabel')}</label>
                   <Input
-                    placeholder={t('import.urlPlaceholder')}
+                    id="url-input"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     aria-describedby="url-input-hint"
@@ -316,6 +317,7 @@ export default function ImportPage() {
               >
                 {isCompressing ? t('import.processing') : t('import.addPhoto')}
               </Button>
+              <p className="text-xs text-muted-foreground">{t('import.photosHint')}</p>
               <form onSubmit={handlePhotosSubmit}>
                 <Button type="submit" className="w-full" disabled={photos.length === 0 || status === 'importing'}>
                   {status === 'importing' ? t('import.extracting') : t('import.extractFromPhotos')}
@@ -324,13 +326,20 @@ export default function ImportPage() {
             </TabsContent>
             <TabsContent value="text">
               <form onSubmit={handleTextSubmit} className="space-y-4">
-                <Textarea
-                  placeholder={t('import.textPlaceholder')}
-                  rows={10}
-                  value={pastedText}
-                  onChange={(e) => setPastedText(e.target.value)}
-                  required
-                />
+                <div className="space-y-1">
+                  <label htmlFor="text-input" className="sr-only">{t('import.textLabel')}</label>
+                  <Textarea
+                    id="text-input"
+                    rows={10}
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    aria-describedby="text-input-hint"
+                    required
+                  />
+                  <p id="text-input-hint" className="text-xs text-muted-foreground">
+                    {t('import.textPlaceholder')}
+                  </p>
+                </div>
                 <Button type="submit" className="w-full" disabled={status === 'importing'}>
                   {status === 'importing' ? t('import.extracting') : t('import.extractFromText')}
                 </Button>

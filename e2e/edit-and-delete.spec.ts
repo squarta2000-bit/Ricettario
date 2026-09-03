@@ -6,7 +6,7 @@ test('edit a saved recipe from the home page, then delete it', async ({ page }) 
   try {
     await page.goto('/import')
     await page
-      .getByPlaceholder('https://example.com/recipe or a YouTube URL')
+      .getByLabel('Recipe URL')
       .fill('https://nonexistent.invalid/recipe')
     await page.getByRole('button', { name: 'Import' }).click()
 

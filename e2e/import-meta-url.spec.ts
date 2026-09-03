@@ -7,7 +7,7 @@ test('pasting an Instagram Reel link that fails shows the upload-fallback messag
   try {
     await page.goto('/import')
     await page
-      .getByPlaceholder('https://example.com/recipe, a YouTube URL, or an Instagram/Facebook Reel link')
+      .getByLabel('Recipe URL')
       .fill('https://www.instagram.com/reel/nonexistent-fixture-post/')
     await page.getByRole('button', { name: 'Import' }).click()
 
