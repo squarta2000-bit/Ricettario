@@ -69,7 +69,7 @@ export async function getRecipe(id: string): Promise<RecipeWithDetails> {
 export interface SaveRecipeInput {
   title: string
   sourceUrl: string | null
-  sourceType: 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook'
+  sourceType: 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook' | 'tiktok'
   imageUrl: string | null
   complexity: string | null
   servings: string | null

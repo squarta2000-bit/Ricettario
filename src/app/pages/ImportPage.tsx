@@ -8,6 +8,7 @@ import type { RecipeDraft } from '../lib/types'
 import { compressImageFile, type CompressedImage } from '../lib/imageResize'
 import { sampleVideoFrames } from '../lib/videoFrameSampler'
 import { isInstagramOrFacebookUrl } from '../lib/metaUrl'
+import { isTiktokUrl } from '../lib/tiktokUrl'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
@@ -16,7 +17,7 @@ import { BackLink } from '../components/BackLink'
 import { LanguageSelector } from '../components/LanguageSelector'
 
 type ImportMode = 'url' | 'photos' | 'text'
-type SourceType = 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook'
+type SourceType = 'web' | 'youtube' | 'photo' | 'text' | 'video' | 'instagram' | 'facebook' | 'tiktok'
 
 type ImportRequestBody =
   | { type: 'url'; url: string }
@@ -165,7 +166,7 @@ export default function ImportPage() {
     })
     if (error || !data?.draft) {
       const isRateLimited = error?.context?.status === 429
-      const isMetaUrl = body.type === 'url' && isInstagramOrFacebookUrl(body.url)
+      const isMetaUrl = body.type === 'url' && (isInstagramOrFacebookUrl(body.url) || isTiktokUrl(body.url))
       setErrorMessage(
         isRateLimited
           ? t('import.rateLimitError')
