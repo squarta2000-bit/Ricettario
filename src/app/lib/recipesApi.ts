@@ -61,6 +61,7 @@ export async function getRecipe(id: string): Promise<RecipeWithDetails> {
         position: s.position,
         instruction: s.instruction,
         estimatedMinutes: s.estimated_minutes,
+        enrichedInstruction: s.enriched_instruction,
       })),
   }
 }
@@ -75,7 +76,7 @@ export interface SaveRecipeInput {
   prepMinutes: number | null
   cookMinutes: number | null
   ingredients: { rawText: string; quantity: number | null; unit: string | null; name: string }[]
-  steps: { instruction: string; estimatedMinutes: number | null }[]
+  steps: { instruction: string; estimatedMinutes: number | null; enrichedInstruction?: string | null }[]
 }
 
 function buildIngredientAndStepRows(recipeId: string, input: SaveRecipeInput) {
@@ -92,6 +93,7 @@ function buildIngredientAndStepRows(recipeId: string, input: SaveRecipeInput) {
     position: index,
     instruction: step.instruction,
     estimated_minutes: step.estimatedMinutes,
+    enriched_instruction: step.enrichedInstruction ?? null,
   }))
   return { ingredientRows, stepRows }
 }

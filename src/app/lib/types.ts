@@ -14,6 +14,7 @@ export interface Step {
   position: number
   instruction: string
   estimatedMinutes: number | null
+  enrichedInstruction: string | null
 }
 
 export interface Recipe {
@@ -57,6 +58,7 @@ export interface RecipeDraftIngredient {
 export interface RecipeDraftStep {
   instruction: string
   estimatedMinutes: number | null
+  enrichedInstruction?: string | null
 }
 
 export interface RecipeDraft {
