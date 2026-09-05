@@ -100,11 +100,11 @@ export default function RecipeDetailPage() {
             const neededIngredients = matchIngredientsForStep(step, recipe.ingredients)
             return (
               <li key={step.id} className="text-sm">
-                {step.instruction}
+                {step.enrichedInstruction ?? step.instruction}
                 {step.estimatedMinutes != null && (
                   <span className="text-muted-foreground"> ({formatNumber(step.estimatedMinutes)} min)</span>
                 )}
-                {neededIngredients.length > 0 && (
+                {step.enrichedInstruction == null && neededIngredients.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {t('recipeDetail.needs')}: {neededIngredients.map(formatIngredientLine).join(', ')}
                   </p>

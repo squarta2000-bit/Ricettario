@@ -124,8 +124,8 @@ export default function CookingModePage() {
               <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground mb-2">
                 {t('cooking.stepOf', { current: timer.currentStepIndex + 1, total: recipe.steps.length })}
               </p>
-              <p className="text-xl mb-4">{step.instruction}</p>
-              {neededIngredients.length > 0 && (
+              <p className="text-xl mb-4">{step.enrichedInstruction ?? step.instruction}</p>
+              {step.enrichedInstruction == null && neededIngredients.length > 0 && (
                 <p className="text-sm text-muted-foreground mb-4">
                   {t('recipeDetail.needs')}: {neededIngredients.map(formatIngredientLine).join(', ')}
                 </p>
