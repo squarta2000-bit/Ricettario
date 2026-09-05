@@ -1,13 +1,13 @@
+export function detectTiktokUrl(url: string): boolean {
+  return /^https?:\/\/(www\.)?(tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com|m\.tiktok\.com)\//i.test(url);
+}
+
 // TikTok's oEmbed endpoint is public and unauthenticated - no developer
 // app, no access token, no App Review, unlike Meta's equivalent (see
 // docs/superpowers/specs/2026-09-05-tiktok-import-design.md). Confirmed
 // live during the spike that predates this file: a request without a
 // browser-like User-Agent can be blocked by TikTok's WAF, while one with
 // a standard browser UA string succeeds - always send this header.
-export function detectTiktokUrl(url: string): boolean {
-  return /^https?:\/\/(www\.)?(tiktok\.com|vm\.tiktok\.com)\//i.test(url);
-}
-
 export async function fetchTiktokCaption(url: string, fetchFn: typeof fetch): Promise<string> {
   const requestUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
   const response = await fetchFn(requestUrl, {

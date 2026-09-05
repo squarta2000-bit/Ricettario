@@ -24,6 +24,14 @@ Deno.test("detects vm.tiktok.com short links", () => {
   assertEquals(detectTiktokUrl("https://vm.tiktok.com/ABC123/"), true);
 });
 
+Deno.test("detects vt.tiktok.com short links", () => {
+  assertEquals(detectTiktokUrl("https://vt.tiktok.com/ZM123abc/"), true);
+});
+
+Deno.test("detects m.tiktok.com URLs", () => {
+  assertEquals(detectTiktokUrl("https://m.tiktok.com/@user/video/123"), true);
+});
+
 Deno.test("returns false for unrelated URLs", () => {
   assertEquals(detectTiktokUrl("https://example.com/recipe"), false);
   assertEquals(detectTiktokUrl("https://youtu.be/abcdefghijk"), false);
