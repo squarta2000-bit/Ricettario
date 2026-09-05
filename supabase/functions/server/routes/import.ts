@@ -6,6 +6,7 @@ import { extractRecipeFromImages, type ImageInput } from "../extraction/llmExtra
 import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
 import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
 import { detectMetaUrl } from "../extraction/metaOembed.ts";
+import { detectTiktokUrl } from "../extraction/tiktokOembed.ts";
 import { mergeDrafts } from "../extraction/mergeDrafts.ts";
 import { enrichSteps } from "../extraction/enrichSteps.ts";
 import { dedupeStepReferences } from "../extraction/dedupeStepReferences.ts";
@@ -17,6 +18,7 @@ export interface ImportAppDeps {
   fetchYoutubeTranscript: (videoId: string) => Promise<string>;
   fetchYoutubeVideoInfo: (videoId: string) => Promise<YoutubeVideoInfo>;
   fetchMetaCaption: (url: string, platform: "instagram" | "facebook") => Promise<string>;
+  fetchTiktokCaption: (url: string) => Promise<string>;
   llmClientFactory: () => MessagesClient;
   countRecentImports: (userId: string) => Promise<number>;
   recordImportAttempt: (userId: string) => Promise<void>;
@@ -49,7 +51,7 @@ export function buildImportApp(deps: ImportAppDeps) {
           : undefined;
 
       let draft: RecipeDraft | null;
-      let sourceType: "web" | "youtube" | "text" | "photo" | "instagram" | "facebook";
+      let sourceType: "web" | "youtube" | "text" | "photo" | "instagram" | "facebook" | "tiktok";
 
       if (type === "text") {
         if (typeof rawBody.text !== "string") return c.json({ error: "Missing text" }, 400);
@@ -66,7 +68,8 @@ export function buildImportApp(deps: ImportAppDeps) {
         const url = rawBody.url;
         const videoId = extractYoutubeVideoId(url);
         const metaMatch = videoId ? null : detectMetaUrl(url);
-        sourceType = videoId ? "youtube" : metaMatch ? metaMatch.platform : "web";
+        const isTiktok = !videoId && !metaMatch && detectTiktokUrl(url);
+        sourceType = videoId ? "youtube" : metaMatch ? metaMatch.platform : isTiktok ? "tiktok" : "web";
 
         if (videoId) {
           let sourceText: string;
@@ -83,6 +86,9 @@ export function buildImportApp(deps: ImportAppDeps) {
           draft = await extractRecipeWithLlm(sourceText, deps.llmClientFactory());
         } else if (metaMatch) {
           const caption = await deps.fetchMetaCaption(url, metaMatch.platform);
+          draft = await extractRecipeWithLlm(caption, deps.llmClientFactory());
+        } else if (isTiktok) {
+          const caption = await deps.fetchTiktokCaption(url);
           draft = await extractRecipeWithLlm(caption, deps.llmClientFactory());
         } else {
           const pageResponse = await fetch(url);

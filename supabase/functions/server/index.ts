@@ -7,6 +7,7 @@ import { buildLoginApp } from "./routes/login.ts";
 import { fetchYoutubeTranscript } from "./extraction/youtubeTranscript.ts";
 import { fetchYoutubeVideoInfo } from "./extraction/youtubeDescription.ts";
 import { fetchMetaCaption } from "./extraction/metaOembed.ts";
+import { fetchTiktokCaption } from "./extraction/tiktokOembed.ts";
 import { createAnthropicMessagesClient } from "./extraction/llmExtract.ts";
 import { mintSessionForEmail } from "./auth/mintSession.ts";
 import { countRecentImports, recordImportAttempt } from "./rateLimit.ts";
@@ -49,6 +50,7 @@ app.route(
     fetchYoutubeTranscript: (videoId) => fetchYoutubeTranscript(videoId, fetch),
     fetchYoutubeVideoInfo: (videoId) => fetchYoutubeVideoInfo(videoId, youtubeApiKey, fetch),
     fetchMetaCaption: (url, platform) => fetchMetaCaption(url, platform, `${metaAppId}|${metaClientToken}`, fetch),
+    fetchTiktokCaption: (url) => fetchTiktokCaption(url, fetch),
     llmClientFactory: () => createAnthropicMessagesClient(anthropicApiKey),
     countRecentImports: (userId) => countRecentImports(supabaseUrl, serviceRoleKey, userId),
     recordImportAttempt: (userId) => recordImportAttempt(supabaseUrl, serviceRoleKey, userId),
