@@ -60,6 +60,26 @@ Deno.test("throws when the number of returned entries does not match the number 
   );
 });
 
+Deno.test("includes each ingredient's rawText in the prompt, not just its parsed quantity/unit/name", async () => {
+  let params: Record<string, unknown> = {};
+  await enrichSteps(
+    [{ rawText: "1 gousse ail rose", quantity: 1, unit: "gousse", name: "ail" }],
+    ONE_STEP,
+    {
+      messages: {
+        create: async (p: Record<string, unknown>) => {
+          params = p;
+          return { content: [{ type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: null }] }) }] };
+        },
+      },
+    },
+  );
+  const promptText = JSON.stringify(params.messages);
+  if (!promptText.includes("1 gousse ail rose")) {
+    throw new Error(`Expected the prompt to include the ingredient's rawText, got: ${promptText}`);
+  }
+});
+
 Deno.test("requests deterministic sampling, since this is a rewrite pass not creative writing", async () => {
   let params: Record<string, unknown> = {};
   await enrichSteps(

@@ -16,7 +16,7 @@ function ingredient(overrides: Partial<Ingredient>): Ingredient {
 }
 
 function step(instruction: string): Step {
-  return { id: 'step-1', recipeId: 'recipe-1', position: 0, instruction, estimatedMinutes: null }
+  return { id: 'step-1', recipeId: 'recipe-1', position: 0, instruction, estimatedMinutes: null, enrichedInstruction: null }
 }
 
 describe('matchIngredientsForStep', () => {

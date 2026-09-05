@@ -105,11 +105,12 @@ export function buildImportApp(deps: ImportAppDeps) {
         try {
           const enriched = await enrichSteps(draft.ingredients, draft.steps, deps.llmClientFactory());
           draft = { ...draft, steps: draft.steps.map((s, i) => ({ ...s, enrichedInstruction: enriched[i] ?? null })) };
-        } catch {
+        } catch (error) {
           // Enrichment is an enhancement, not core functionality - never let a
           // failure here block the import itself. Falling back to null for
           // every step renders identically to today's actual behavior (plain
           // instruction + "Needs:" recap), never an error state.
+          console.warn("Step enrichment failed, falling back to null for every step:", error);
           draft = { ...draft, steps: draft.steps.map((s) => ({ ...s, enrichedInstruction: null })) };
         }
       }

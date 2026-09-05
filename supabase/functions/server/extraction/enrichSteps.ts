@@ -30,6 +30,7 @@ interface EnrichmentStep {
 }
 
 function formatIngredientForPrompt(ingredient: EnrichmentIngredient): string {
+  if (ingredient.rawText.trim().length > 0) return ingredient.rawText.trim();
   const quantity = ingredient.quantity != null ? `${ingredient.quantity} ${ingredient.unit ?? ""} ` : "";
   return `${quantity}${ingredient.name}`.trim();
 }
@@ -55,7 +56,10 @@ function parseEnrichmentResponse(response: LlmResponse, expectedCount: number): 
     throw new Error(`Step enrichment returned ${parsed.steps?.length ?? 0} entries, expected ${expectedCount}`);
   }
 
-  return parsed.steps.map((s) => s.enrichedInstruction ?? null);
+  return parsed.steps.map((s) => {
+    const value = s.enrichedInstruction;
+    return typeof value === "string" && value.trim().length > 0 ? value : null;
+  });
 }
 
 export async function enrichSteps(
@@ -67,7 +71,7 @@ export async function enrichSteps(
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 4000,
+    max_tokens: 8000,
     // Rewriting is a mechanical grammar/insertion task, not creative writing -
     // deterministic sampling keeps it consistent run-to-run, same reasoning as llmExtract.ts.
     temperature: 0,

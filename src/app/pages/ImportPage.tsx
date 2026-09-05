@@ -385,6 +385,7 @@ export default function ImportPage() {
                   ingredients: e.target.value
                     .split('\n')
                     .map((line) => ({ rawText: line, quantity: null, unit: null, name: line })),
+                  steps: d.steps.map((s) => ({ ...s, enrichedInstruction: null })),
                 },
             )
           }

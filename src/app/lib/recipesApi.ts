@@ -61,7 +61,7 @@ export async function getRecipe(id: string): Promise<RecipeWithDetails> {
         position: s.position,
         instruction: s.instruction,
         estimatedMinutes: s.estimated_minutes,
-        enrichedInstruction: s.enriched_instruction,
+        enrichedInstruction: s.enriched_instruction ?? null,
       })),
   }
 }
