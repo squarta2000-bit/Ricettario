@@ -72,7 +72,11 @@ export default function ImportPage() {
             unit: i.unit,
             name: i.name,
           })),
-          steps: recipe.steps.map((s) => ({ instruction: s.instruction, estimatedMinutes: s.estimatedMinutes })),
+          steps: recipe.steps.map((s) => ({
+            instruction: s.instruction,
+            estimatedMinutes: s.estimatedMinutes,
+            enrichedInstruction: s.enrichedInstruction,
+          })),
         })
         setEditSourceUrl(recipe.sourceUrl)
         setSourceType(recipe.sourceType)
@@ -396,12 +400,17 @@ export default function ImportPage() {
               (d) =>
                 d && {
                   ...d,
-                  steps: e.target.value
-                    .split('\n')
-                    .map((line, index) => ({
+                  steps: e.target.value.split('\n').map((line, index) => {
+                    const previous = d.steps[index]
+                    return {
                       instruction: line,
-                      estimatedMinutes: d.steps[index]?.estimatedMinutes ?? null,
-                    })),
+                      estimatedMinutes: previous?.estimatedMinutes ?? null,
+                      // A rewritten instruction that no longer matches the raw
+                      // text it was computed from would actively mislead the
+                      // user - drop it as soon as this line's text changes.
+                      enrichedInstruction: previous?.instruction === line ? previous.enrichedInstruction ?? null : null,
+                    }
+                  }),
                 },
             )
           }
