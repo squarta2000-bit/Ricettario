@@ -80,6 +80,26 @@ Deno.test("includes each ingredient's rawText in the prompt, not just its parsed
   }
 });
 
+Deno.test("includes the unit in the prompt's fallback formatting even when quantity is null", async () => {
+  let params: Record<string, unknown> = {};
+  await enrichSteps(
+    [{ rawText: "", quantity: null, unit: "pincée", name: "sel" }],
+    ONE_STEP,
+    {
+      messages: {
+        create: async (p: Record<string, unknown>) => {
+          params = p;
+          return { content: [{ type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: null }] }) }] };
+        },
+      },
+    },
+  );
+  const promptText = JSON.stringify(params.messages);
+  if (!promptText.includes("pincée")) {
+    throw new Error(`Expected the fallback formatting to include the unit, got: ${promptText}`);
+  }
+});
+
 Deno.test("requests deterministic sampling, since this is a rewrite pass not creative writing", async () => {
   let params: Record<string, unknown> = {};
   await enrichSteps(

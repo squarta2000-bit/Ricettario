@@ -31,7 +31,9 @@ interface EnrichmentStep {
 
 function formatIngredientForPrompt(ingredient: EnrichmentIngredient): string {
   if (ingredient.rawText.trim().length > 0) return ingredient.rawText.trim();
-  const quantity = ingredient.quantity != null ? `${ingredient.quantity} ${ingredient.unit ?? ""} ` : "";
+  const quantity = ingredient.quantity != null || ingredient.unit != null
+    ? `${ingredient.quantity ?? ""} ${ingredient.unit ?? ""} `
+    : "";
   return `${quantity}${ingredient.name}`.trim();
 }
 
