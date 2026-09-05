@@ -7,6 +7,7 @@ import { extractYoutubeVideoId } from "../extraction/youtubeTranscript.ts";
 import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
 import { detectMetaUrl } from "../extraction/metaOembed.ts";
 import { mergeDrafts } from "../extraction/mergeDrafts.ts";
+import { enrichSteps } from "../extraction/enrichSteps.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
 
@@ -98,6 +99,19 @@ export function buildImportApp(deps: ImportAppDeps) {
         }
       } else {
         return c.json({ error: `Unsupported import type: ${String(type)}` }, 400);
+      }
+
+      if (draft) {
+        try {
+          const enriched = await enrichSteps(draft.ingredients, draft.steps, deps.llmClientFactory());
+          draft = { ...draft, steps: draft.steps.map((s, i) => ({ ...s, enrichedInstruction: enriched[i] ?? null })) };
+        } catch {
+          // Enrichment is an enhancement, not core functionality - never let a
+          // failure here block the import itself. Falling back to null for
+          // every step renders identically to today's actual behavior (plain
+          // instruction + "Needs:" recap), never an error state.
+          draft = { ...draft, steps: draft.steps.map((s) => ({ ...s, enrichedInstruction: null })) };
+        }
       }
 
       return c.json({ draft, sourceType });

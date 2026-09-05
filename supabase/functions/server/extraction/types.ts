@@ -6,5 +6,5 @@ export interface RecipeDraft {
   prepMinutes: number | null
   cookMinutes: number | null
   ingredients: { rawText: string; quantity: number | null; unit: string | null; name: string }[]
-  steps: { instruction: string; estimatedMinutes: number | null }[]
+  steps: { instruction: string; estimatedMinutes: number | null; enrichedInstruction?: string | null }[]
 }

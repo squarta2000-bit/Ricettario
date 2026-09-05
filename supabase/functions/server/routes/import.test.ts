@@ -504,3 +504,99 @@ Deno.test("falls back to the generic error path when Meta caption fetching fails
   });
   assertEquals(response.status, 502);
 });
+
+Deno.test("threads the enrichment pass's rewritten instructions into the response", async () => {
+  let callCount = 0;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
+    llmClientFactory: () => ({
+      messages: {
+        create: async () => {
+          callCount += 1;
+          if (callCount === 1) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    title: "Soup",
+                    complexity: null,
+                    servings: null,
+                    ingredients: [{ rawText: "1 onion", quantity: 1, unit: null, name: "onion" }],
+                    steps: [{ instruction: "Chop the onion.", estimatedMinutes: 5 }],
+                  }),
+                },
+              ],
+            };
+          }
+          return {
+            content: [
+              { type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: "Chop the 1 onion." }] }) },
+            ],
+          };
+        },
+      },
+    }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text", text: "Chop the onion." }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.draft.steps[0].enrichedInstruction, "Chop the 1 onion.");
+});
+
+Deno.test("falls back to null enrichedInstruction for every step when the enrichment call fails", async () => {
+  let callCount = 0;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
+    llmClientFactory: () => ({
+      messages: {
+        create: async () => {
+          callCount += 1;
+          if (callCount === 1) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    title: "Soup",
+                    complexity: null,
+                    servings: null,
+                    ingredients: [],
+                    steps: [
+                      { instruction: "Chop the onion.", estimatedMinutes: 5 },
+                      { instruction: "Simmer.", estimatedMinutes: 10 },
+                    ],
+                  }),
+                },
+              ],
+            };
+          }
+          throw new Error("enrichment call failed");
+        },
+      },
+    }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text", text: "Chop the onion. Simmer." }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.draft.steps[0].enrichedInstruction, null);
+  assertEquals(body.draft.steps[1].enrichedInstruction, null);
+});
