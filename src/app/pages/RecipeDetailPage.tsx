@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { getRecipe } from '../lib/recipesApi'
 import { formatRecipeDuration } from '../lib/formatDuration'
-import { formatNumber } from '../lib/europeanFormat'
+import { formatIngredientLine, formatNumber } from '../lib/europeanFormat'
+import { matchIngredientsForStep } from '../lib/matchIngredientsToSteps'
 import { useTranslation } from '../lib/i18n/LanguageContext'
 import type { RecipeWithDetails } from '../lib/types'
 import { Button } from '../components/ui/button'
@@ -88,22 +89,29 @@ export default function RecipeDetailPage() {
         <ul className="mb-8 space-y-1 list-disc list-inside">
           {recipe.ingredients.map((ing) => (
             <li key={ing.id} className="text-sm">
-              {ing.quantity != null ? `${formatNumber(ing.quantity)} ${ing.unit ?? ''} ` : ''}
-              {ing.name}
+              {formatIngredientLine(ing)}
             </li>
           ))}
         </ul>
 
         <h2 className="font-serif text-lg mb-2">{t('recipeDetail.steps')}</h2>
         <ol className="space-y-3 list-decimal list-inside">
-          {recipe.steps.map((step) => (
-            <li key={step.id} className="text-sm">
-              {step.instruction}
-              {step.estimatedMinutes != null && (
-                <span className="text-muted-foreground"> ({formatNumber(step.estimatedMinutes)} min)</span>
-              )}
-            </li>
-          ))}
+          {recipe.steps.map((step) => {
+            const neededIngredients = matchIngredientsForStep(step, recipe.ingredients)
+            return (
+              <li key={step.id} className="text-sm">
+                {step.instruction}
+                {step.estimatedMinutes != null && (
+                  <span className="text-muted-foreground"> ({formatNumber(step.estimatedMinutes)} min)</span>
+                )}
+                {neededIngredients.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('recipeDetail.needs')}: {neededIngredients.map(formatIngredientLine).join(', ')}
+                  </p>
+                )}
+              </li>
+            )
+          })}
         </ol>
       </div>
     </div>

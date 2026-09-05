@@ -1,3 +1,5 @@
+import type { Ingredient } from './types'
+
 // This app targets a European audience, so numbers and dates always use
 // the continental European convention (comma decimal separator, DD/MM/YYYY
 // dates) - fixed regardless of the UI language the user has selected,
@@ -14,4 +16,9 @@ export function formatNumber(value: number): string {
 export function formatDate(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value
   return new Intl.DateTimeFormat(DATE_LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+}
+
+export function formatIngredientLine(ingredient: Ingredient): string {
+  const quantity = ingredient.quantity != null ? `${formatNumber(ingredient.quantity)} ${ingredient.unit ?? ''} ` : ''
+  return `${quantity}${ingredient.name}`
 }

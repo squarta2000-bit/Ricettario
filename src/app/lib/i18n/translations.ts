@@ -41,6 +41,7 @@ export const en = {
   'recipeDetail.startCooking': 'Start cooking',
   'recipeDetail.ingredients': 'Ingredients',
   'recipeDetail.steps': 'Steps',
+  'recipeDetail.needs': 'Needs',
   'recipeDetail.loadError': 'Something went wrong loading this recipe.',
   'recipeDetail.backToRecipes': 'Back to recipes',
 
@@ -134,6 +135,7 @@ export const it: Record<TranslationKey, string> = {
   'recipeDetail.startCooking': 'Inizia a cucinare',
   'recipeDetail.ingredients': 'Ingredienti',
   'recipeDetail.steps': 'Preparazione',
+  'recipeDetail.needs': 'Serve',
   'recipeDetail.loadError': 'Si è verificato un problema nel caricamento di questa ricetta.',
   'recipeDetail.backToRecipes': 'Torna alle ricette',
 
@@ -225,6 +227,7 @@ export const fr: Record<TranslationKey, string> = {
   'recipeDetail.startCooking': 'Commencer la cuisson',
   'recipeDetail.ingredients': 'Ingrédients',
   'recipeDetail.steps': 'Étapes',
+  'recipeDetail.needs': 'Nécessite',
   'recipeDetail.loadError': "Une erreur s'est produite lors du chargement de cette recette.",
   'recipeDetail.backToRecipes': 'Retour aux recettes',
 

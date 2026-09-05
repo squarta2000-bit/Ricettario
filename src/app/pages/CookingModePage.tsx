@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getRecipe } from '../lib/recipesApi'
 import { playStepAlertSound } from '../lib/alertSound'
+import { formatIngredientLine } from '../lib/europeanFormat'
+import { matchIngredientsForStep } from '../lib/matchIngredientsToSteps'
 import { useTranslation } from '../lib/i18n/LanguageContext'
 import {
   startTimer,
@@ -94,6 +96,7 @@ export default function CookingModePage() {
   }
 
   const step = recipe.steps[timer.currentStepIndex]
+  const neededIngredients = matchIngredientsForStep(step, recipe.ingredients)
   const elapsedSeconds = Math.floor(elapsedMsForCurrentStep(timer, Date.now()) / 1000)
   const remainingSeconds = step.estimatedMinutes != null ? Math.max(0, step.estimatedMinutes * 60 - elapsedSeconds) : null
 
@@ -122,6 +125,11 @@ export default function CookingModePage() {
                 {t('cooking.stepOf', { current: timer.currentStepIndex + 1, total: recipe.steps.length })}
               </p>
               <p className="text-xl mb-4">{step.instruction}</p>
+              {neededIngredients.length > 0 && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t('recipeDetail.needs')}: {neededIngredients.map(formatIngredientLine).join(', ')}
+                </p>
+              )}
               {remainingSeconds != null && (
                 <p className="text-4xl font-mono mb-6">
                   {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
