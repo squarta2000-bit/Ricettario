@@ -100,6 +100,46 @@ Deno.test("includes the unit in the prompt's fallback formatting even when quant
   }
 });
 
+Deno.test("instructs the model to judge each ingredient mention independently, not the step as a whole", async () => {
+  let params: Record<string, unknown> = {};
+  await enrichSteps(
+    ONE_INGREDIENT,
+    ONE_STEP,
+    {
+      messages: {
+        create: async (p: Record<string, unknown>) => {
+          params = p;
+          return { content: [{ type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: null }] }) }] };
+        },
+      },
+    },
+  );
+  const promptText = JSON.stringify(params.messages);
+  if (!promptText.includes("one mention at a time")) {
+    throw new Error(`Expected the prompt to instruct per-mention judgment, got: ${promptText}`);
+  }
+});
+
+Deno.test("includes a worked example of a partially-specific step, so a step with one already-specific mention doesn't get skipped entirely", async () => {
+  let params: Record<string, unknown> = {};
+  await enrichSteps(
+    ONE_INGREDIENT,
+    ONE_STEP,
+    {
+      messages: {
+        create: async (p: Record<string, unknown>) => {
+          params = p;
+          return { content: [{ type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: null }] }) }] };
+        },
+      },
+    },
+  );
+  const promptText = JSON.stringify(params.messages);
+  if (!promptText.includes("Verser 50 cl de crème et le lait")) {
+    throw new Error(`Expected the prompt to include the partially-specific worked example, got: ${promptText}`);
+  }
+});
+
 Deno.test("requests deterministic sampling, since this is a rewrite pass not creative writing", async () => {
   let params: Record<string, unknown> = {};
   await enrichSteps(

@@ -78,14 +78,24 @@ export async function enrichSteps(
   if (steps.length === 0) return [];
 
   const promptContent =
-    "Here is a recipe's ingredient list and its preparation steps. Rewrite ONLY the steps that refer to " +
-    "an ingredient or piece of equipment generically - a bare noun or pronoun that omits the quantity or " +
-    "defining detail already given in the ingredient list (e.g. \"the pan\", \"the garlic\", \"half the " +
-    "butter\"). Expand that reference in place using only the detail already present in the ingredient " +
-    "list, keeping the rest of the sentence exactly as it is and the result grammatically correct in the " +
-    "same language as the input. Never invent a quantity or detail that isn't in the ingredient list. If " +
-    "a step doesn't need this - it's already specific, or it references nothing in the ingredient list - " +
-    "return null for it. Return exactly one entry per step, in the same order as the steps below.\n\n" +
+    "Here is a recipe's ingredient list and its preparation steps. For each step, consider every " +
+    "ingredient or piece of equipment from the list that its text refers to, one mention at a time - " +
+    "not the step as a whole. For each mention: if it already states that specific ingredient's " +
+    "quantity or defining detail (e.g. the step already says \"50 cl de crème\"), leave it exactly as " +
+    "written. If it's generic - a bare name, article, or pronoun with no quantity or detail (e.g. " +
+    "\"le lait\", \"les pommes de terre\", \"le plat\", \"l'ail\"), insert that ingredient's quantity/detail " +
+    "from the list at that exact point in the sentence, and change nothing else. A single step can have " +
+    "some mentions already specific and others generic - rewrite only the generic ones.\n\n" +
+    "Example: ingredients include \"1,3 kg pommes de terre Mona Lisa\"; step is \"Peler et trancher " +
+    "finement les pommes de terre.\" -> \"Peler et trancher finement les 1,3 kg de pommes de terre Mona " +
+    "Lisa.\"\n" +
+    "Example: ingredients include \"25 cl lait entier\" and \"65 cl crème liquide entière\"; step is " +
+    "\"Verser 50 cl de crème et le lait dans une grande casserole.\" -> the crème mention is already " +
+    "specific, so it stays unchanged; \"le lait\" is generic, so it becomes \"Verser 50 cl de crème et " +
+    "25 cl de lait entier dans une grande casserole.\"\n\n" +
+    "Keep the result grammatically correct, in the same language as the input. Never invent a quantity " +
+    "or detail that isn't in the ingredient list. If a step has no generic mentions at all, return null " +
+    "for it. Return exactly one entry per step, in the same order as the steps below.\n\n" +
     `Ingredients:\n${ingredients.map((i) => `- ${formatIngredientForPrompt(i)}`).join("\n")}\n\n` +
     `Steps:\n${steps.map((s, i) => `${i + 1}. ${s.instruction}`).join("\n")}`;
 
