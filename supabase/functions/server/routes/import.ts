@@ -8,6 +8,7 @@ import type { YoutubeVideoInfo } from "../extraction/youtubeDescription.ts";
 import { detectMetaUrl } from "../extraction/metaOembed.ts";
 import { mergeDrafts } from "../extraction/mergeDrafts.ts";
 import { enrichSteps } from "../extraction/enrichSteps.ts";
+import { dedupeStepReferences } from "../extraction/dedupeStepReferences.ts";
 import { hasImportCapacity } from "../rateLimit.ts";
 import type { RecipeDraft } from "../extraction/types.ts";
 
@@ -112,6 +113,26 @@ export function buildImportApp(deps: ImportAppDeps) {
           // instruction + "Needs:" recap), never an error state.
           console.warn("Step enrichment failed, falling back to null for every step:", error);
           draft = { ...draft, steps: draft.steps.map((s) => ({ ...s, enrichedInstruction: null })) };
+        }
+
+        try {
+          const finalTexts = draft.steps.map((s) => s.enrichedInstruction ?? s.instruction);
+          const deduped = await dedupeStepReferences(draft.ingredients, finalTexts, deps.llmClientFactory());
+          draft = {
+            ...draft,
+            steps: draft.steps.map((s, i) => ({
+              ...s,
+              // Collapse back to null whenever the deduped text ends up
+              // identical to the raw instruction, so the "Needs:" recap
+              // fallback still triggers correctly for that step.
+              enrichedInstruction: deduped[i] === s.instruction ? null : deduped[i],
+            })),
+          };
+        } catch (error) {
+          // De-duplication is an enhancement on top of enrichment, not core
+          // functionality - never let a failure here discard the per-step
+          // enrichment already computed above.
+          console.warn("Step de-duplication failed, keeping per-step enrichment unchanged:", error);
         }
       }
 

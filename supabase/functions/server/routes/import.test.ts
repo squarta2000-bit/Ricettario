@@ -532,10 +532,17 @@ Deno.test("threads the enrichment pass's rewritten instructions into the respons
               ],
             };
           }
+          if (callCount === 2) {
+            return {
+              content: [
+                { type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: "Chop the 1 onion." }] }) },
+              ],
+            };
+          }
+          // Third call: the de-duplication pass. A single step has nothing
+          // to de-duplicate against, so it comes back unchanged.
           return {
-            content: [
-              { type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: "Chop the 1 onion." }] }) },
-            ],
+            content: [{ type: "text", text: JSON.stringify({ steps: [{ instruction: "Chop the 1 onion." }] }) }],
           };
         },
       },
@@ -550,6 +557,138 @@ Deno.test("threads the enrichment pass's rewritten instructions into the respons
   });
   const body = await response.json();
   assertEquals(response.status, 200);
+  assertEquals(body.draft.steps[0].enrichedInstruction, "Chop the 1 onion.");
+});
+
+Deno.test("threads the de-duplication pass's shortened instructions into the response, collapsing to null when the result matches the raw instruction", async () => {
+  let callCount = 0;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
+    llmClientFactory: () => ({
+      messages: {
+        create: async () => {
+          callCount += 1;
+          if (callCount === 1) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    title: "Potatoes",
+                    complexity: null,
+                    servings: null,
+                    ingredients: [{ rawText: "1kg potatoes", quantity: 1, unit: "kg", name: "potatoes" }],
+                    steps: [
+                      { instruction: "Peel the potatoes.", estimatedMinutes: 5 },
+                      { instruction: "Boil the potatoes.", estimatedMinutes: 10 },
+                    ],
+                  }),
+                },
+              ],
+            };
+          }
+          if (callCount === 2) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    steps: [
+                      { enrichedInstruction: "Peel the 1kg potatoes." },
+                      { enrichedInstruction: "Boil the 1kg potatoes." },
+                    ],
+                  }),
+                },
+              ],
+            };
+          }
+          // Third call: de-duplication keeps the first (fully specific)
+          // mention, and shortens the repeat back down to exactly what the
+          // raw, un-enriched instruction already said.
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  steps: [
+                    { instruction: "Peel the 1kg potatoes." },
+                    { instruction: "Boil the potatoes." },
+                  ],
+                }),
+              },
+            ],
+          };
+        },
+      },
+    }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text", text: "Peel the potatoes. Boil the potatoes." }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  assertEquals(body.draft.steps[0].enrichedInstruction, "Peel the 1kg potatoes.");
+  // Deduped text for step 2 matches the raw instruction exactly - stored as
+  // null so the "Needs:" recap fallback still works for that step.
+  assertEquals(body.draft.steps[1].enrichedInstruction, null);
+});
+
+Deno.test("falls back to the per-step enrichment unchanged when the de-duplication call fails", async () => {
+  let callCount = 0;
+  const app = buildImportApp({
+    getUserId: async () => "user-1",
+    fetchYoutubeTranscript: async () => "",
+    fetchYoutubeVideoInfo: async () => ({ title: "", description: "" }),
+    fetchMetaCaption: async () => "",
+    llmClientFactory: () => ({
+      messages: {
+        create: async () => {
+          callCount += 1;
+          if (callCount === 1) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    title: "Soup",
+                    complexity: null,
+                    servings: null,
+                    ingredients: [{ rawText: "1 onion", quantity: 1, unit: null, name: "onion" }],
+                    steps: [{ instruction: "Chop the onion.", estimatedMinutes: 5 }],
+                  }),
+                },
+              ],
+            };
+          }
+          if (callCount === 2) {
+            return {
+              content: [
+                { type: "text", text: JSON.stringify({ steps: [{ enrichedInstruction: "Chop the 1 onion." }] }) },
+              ],
+            };
+          }
+          throw new Error("de-duplication call failed");
+        },
+      },
+    }),
+    countRecentImports: async () => 0,
+    recordImportAttempt: async () => {},
+  });
+  const response = await app.request("/server/import", {
+    method: "POST",
+    headers: { Authorization: "Bearer token" },
+    body: JSON.stringify({ type: "text", text: "Chop the onion." }),
+  });
+  const body = await response.json();
+  assertEquals(response.status, 200);
+  // De-duplication failing must not discard the enrichment already computed.
   assertEquals(body.draft.steps[0].enrichedInstruction, "Chop the 1 onion.");
 });
 
